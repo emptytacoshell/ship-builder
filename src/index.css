@@ -1,0 +1,69 @@
+/* Pirate Ship Builder — theme tokens & base styles. */
+:root {
+  --parchment: #e8d9b5;
+  --parchment-dark: #d3bd8f;
+  --wood: #5b3a22;
+  --wood-dark: #3a2417;
+  --ink: #2b1d10;
+  --ink-soft: #5a4630;
+  --gold: #c9a227;
+  --gold-bright: #e8c15a;
+  --rope: #b8945f;
+  --danger: #8a2b1b;
+  --shadow: rgba(0, 0, 0, 0.35);
+
+  --font-display: 'Pirata One', 'Georgia', serif;
+  --font-body: 'Georgia', 'Times New Roman', serif;
+
+  color-scheme: light;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% -10%, #f0e2bf 0%, transparent 45%),
+    radial-gradient(circle at 90% 0%, #e6d2a6 0%, transparent 40%),
+    linear-gradient(160deg, #d9c39a 0%, #c9b184 50%, #b89b6a 100%);
+  background-attachment: fixed;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select {
+  font-family: inherit;
+}
+
+#root {
+  width: 100%;
+}
+
+

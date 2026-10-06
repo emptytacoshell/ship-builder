@@ -1,0 +1,355 @@
+/* Layout */
+.builder {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 28px 20px 64px;
+}
+
+.builder__header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.builder__title {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  color: var(--wood-dark);
+  text-shadow: 2px 2px 0 var(--gold);
+}
+
+.builder__tagline {
+  color: var(--ink-soft);
+  font-style: italic;
+  margin-top: 6px;
+}
+
+.builder__grid {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr) 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+.builder__col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Left-column panels (Ship Class, Hull, Rigging, Armament) share one wrapper. */
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 1100px) {
+  .builder__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Section card */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--parchment);
+  border: 2px solid var(--wood);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.section-title {
+  font-size: 1.5rem;
+  color: var(--wood-dark);
+  border-bottom: 2px dashed var(--rope);
+  padding-bottom: 6px;
+}
+
+.sub-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+}
+
+/* Preview */
+.preview-card {
+  background: var(--parchment);
+  border: 3px solid var(--wood);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.ship-preview {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(160deg, #f2e2bd, #d9b98a);
+}
+
+.ship-name {
+  font-family: var(--font-display);
+  fill: var(--wood-dark);
+  font-size: 20px;
+  letter-spacing: 2px;
+}
+
+/* Option grid */
+.option-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option {
+  padding: 8px 12px;
+  border: 2px solid var(--wood);
+  border-radius: 6px;
+  background: var(--parchment);
+  color: var(--ink);
+  font-size: 0.9rem;
+  transition: transform 0.08s, background 0.15s, color 0.15s;
+}
+
+.option:hover {
+  transform: translateY(-1px);
+}
+
+.option--active {
+  background: var(--wood);
+  color: var(--parchment);
+  border-color: var(--wood-dark);
+}
+
+/* Swatches */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  transition: transform 0.08s;
+}
+
+.swatch:hover {
+  transform: scale(1.08);
+}
+
+.swatch--active {
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 0 3px var(--gold);
+}
+
+/* Stepper */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.stepper__label {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.stepper__btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 2px solid var(--wood);
+  background: var(--parchment);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.stepper__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stepper__value {
+  min-width: 24px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Inputs */
+.text-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid var(--wood);
+  border-radius: 6px;
+  background: var(--parchment);
+  color: var(--ink);
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
+
+.text-input:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+
+.select-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid var(--wood);
+  border-radius: 6px;
+  background: var(--parchment);
+  color: var(--ink);
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat__head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.stat__value {
+  font-weight: 700;
+  color: var(--wood-dark);
+}
+
+.stat__track {
+  height: 14px;
+  margin-top: 4px;
+  border: 2px solid var(--wood);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.stat__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--wood), var(--gold));
+  transition: width 0.3s ease;
+}
+
+/* Flag & figurehead preview */
+.flag-preview {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.flag-preview svg {
+  max-width: 240px;
+  width: 100%;
+}
+
+/* Crew */
+.crew {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.crew__empty {
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.crew__member {
+  display: grid;
+  grid-template-columns: 1fr 1fr 52px 34px;
+  gap: 6px;
+  align-items: center;
+}
+
+.crew__name,
+.crew__skill,
+.crew__member .select-input {
+  margin-bottom: 0;
+}
+
+/* Buttons */
+.btn {
+  padding: 9px 14px;
+  border: 2px solid var(--wood-dark);
+  border-radius: 6px;
+  background: var(--wood);
+  color: var(--parchment);
+  font-size: 0.9rem;
+  transition: transform 0.08s, background 0.15s;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  background: var(--wood-dark);
+}
+
+.btn--danger {
+  background: var(--danger);
+  border-color: #5a1c10;
+}
+
+.btn--danger:hover {
+  background: #6a2015;
+}
+
+.crew__member .btn--danger {
+  padding: 6px 0;
+  width: 34px;
+}
+
+/* Save share */
+.save-share {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.save-share__msg {
+  margin-top: 10px;
+  font-style: italic;
+  color: var(--wood-dark);
+  font-size: 0.85rem;
+}
+
+/* Manifest */
+.manifest {
+  background: var(--wood-dark);
+  color: var(--parchment);
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  margin-bottom: 10px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.manifest__keys {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.5px;
+}
