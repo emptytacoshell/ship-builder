@@ -5,14 +5,18 @@ export type ShipClassId =
   | 'galleon'
   | 'frigate'
   | 'corsair'
-  | 'longboat';
+  | 'longboat'
+  | 'sloop'
+  | 'ship-of-the-line'
+  | 'schooner'
+  | 'xebec';
 
-export type WoodId = 'oak' | 'walnut' | 'ironwood' | 'driftwood';
+export type WoodId = 'oak' | 'walnut' | 'ironwood' | 'driftwood' | 'teak' | 'ebony';
 export type SailStyleId = 'square' | 'lateen' | 'gaff' | 'scratched';
-export type CannonTierId = 'none' | 'swivel' | 'long' | 'culverin';
-export type EmblemId = 'skull' | 'anchor' | 'serpent' | 'compass' | 'crown';
+export type CannonTierId = 'none' | 'swivel' | 'long' | 'demi' | 'culverin' | 'mortar' | 'blunderbuss' | 'naval';
+export type EmblemId = 'skull' | 'anchor' | 'serpent' | 'compass' | 'crown' | 'eagle' | 'hourglass';
 export type FlagPatternId = 'solid' | 'stripes' | 'checker' | 'banner';
-export type FigureheadId = 'siren' | 'serpent' | 'raven' | 'sphinx' | 'none';
+export type FigureheadId = 'siren' | 'serpent' | 'raven' | 'sphinx' | 'dolphin' | 'phoenix' | 'griffin' | 'kraken' | 'dragon' | 'none';
 
 export interface HullSelection {
   wood: WoodId;

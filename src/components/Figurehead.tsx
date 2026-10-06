@@ -53,6 +53,50 @@ export function Figurehead({
         </g>
       );
       break;
+    case 'dolphin':
+      shape = (
+        <g>
+          <path d={`M ${-12 * scale} ${8 * scale} Q ${-4 * scale} ${-6 * scale}, ${8 * scale} ${-2 * scale} Q ${14 * scale} ${0}, ${10 * scale} ${9 * scale}`} {...line} />
+          <path d={`M ${-2 * scale} ${1 * scale} L ${2 * scale} ${-7 * scale}`} {...line} />
+        </g>
+      );
+      break;
+    case 'phoenix':
+      shape = (
+        <path
+          d={`M 0 ${-10 * scale} C ${-9 * scale} ${-14 * scale}, ${-14 * scale} ${-2 * scale}, ${-9 * scale} ${5 * scale} C ${-4 * scale} ${3 * scale}, 0 ${6 * scale}, 0 ${11 * scale} C 0 ${6 * scale}, ${4 * scale} ${3 * scale}, ${9 * scale} ${5 * scale} C ${14 * scale} ${-2 * scale}, ${9 * scale} ${-14 * scale}, 0 ${-10 * scale} Z`}
+          {...line}
+        />
+      );
+      break;
+    case 'griffin':
+      shape = (
+        <g>
+          <path d={`M ${-10 * scale} ${6 * scale} Q ${-6 * scale} ${-6 * scale}, ${4 * scale} ${-8 * scale} L ${10 * scale} ${-4 * scale}`} {...line} />
+          <path d={`M ${4 * scale} ${-8 * scale} Q ${8 * scale} ${-2 * scale}, ${4 * scale} ${4 * scale} Q ${0 * scale} ${8 * scale}, ${-10 * scale} ${6 * scale}`} {...line} />
+          <path d={`M ${2 * scale} ${-6 * scale} L ${6 * scale} ${-12 * scale}`} {...line} />
+        </g>
+      );
+      break;
+    case 'kraken':
+      shape = (
+        <g>
+          <circle cx={0} cy={-6 * scale} r={6 * scale} fill={color} />
+          <path d={`M ${-5 * scale} ${0} Q ${-8 * scale} ${8 * scale}, ${-3 * scale} ${12 * scale}`} {...line} />
+          <path d={`M ${0} ${0} Q ${0} ${9 * scale}, ${3 * scale} ${13 * scale}`} {...line} />
+          <path d={`M ${5 * scale} ${0} Q ${8 * scale} ${8 * scale}, ${4 * scale} ${12 * scale}`} {...line} />
+        </g>
+      );
+      break;
+    case 'dragon':
+      shape = (
+        <g>
+          <path d={`M ${-12 * scale} ${4 * scale} Q ${-4 * scale} ${-8 * scale}, ${6 * scale} ${-4 * scale} L ${12 * scale} ${-8 * scale}`} {...line} />
+          <path d={`M ${6 * scale} ${-4 * scale} Q ${10 * scale} ${2 * scale}, ${4 * scale} ${8 * scale} Q ${-4 * scale} ${12 * scale}, ${-12 * scale} ${4 * scale}`} {...line} />
+          <path d={`M ${-2 * scale} ${-4 * scale} L ${2 * scale} ${-12 * scale}`} {...line} />
+        </g>
+      );
+      break;
     default:
       shape = null;
   }

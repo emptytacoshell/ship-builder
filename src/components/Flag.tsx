@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { CSSProperties } from 'react';
 import type { FlagSelection } from '../types/build';
 
@@ -24,18 +25,50 @@ export function Flag({
   const x = originX;
   const y = originY;
 
-  // Pattern overlay clipped to the flag rectangle.
+  // Bounding box of the flag, so patterns line up whether it flies left or right.
+  const left = Math.min(x, x + dir * width);
+  const top = y;
+  const w = Math.abs(width);
+  const h = height;
+  const clipId = useId().replace(/:/g, '');
+
+  // Bold, high-contrast patterns (light + dark bands) so they read clearly on
+  // any flag color. Each is clipped to the flag shape below.
   const pattern =
     flag.pattern === 'stripes' ? (
-      <line x1={x} y1={y + height / 2} x2={x + dir * width} y2={y + height / 2} stroke="rgba(0,0,0,0.18)" strokeWidth={4} />
+      <g clipPath={`url(#${clipId})`}>
+        {[0, 1, 2, 3].map((i) => (
+          <rect
+            key={i}
+            x={left}
+            y={top + (h / 4) * i}
+            width={w}
+            height={h / 4}
+            fill={i % 2 === 0 ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)'}
+          />
+        ))}
+      </g>
     ) : flag.pattern === 'checker' ? (
-      <rect x={x} y={y} width={Math.abs(width) / 2} height={height} fill="rgba(0,0,0,0.15)" transform={dir === -1 ? `translate(${x * 2},0)` : undefined} />
+      <g clipPath={`url(#${clipId})`}>
+        <rect x={left} y={top} width={w / 2} height={h / 2} fill="rgba(255,255,255,0.5)" />
+        <rect x={left + w / 2} y={top} width={w / 2} height={h / 2} fill="rgba(0,0,0,0.45)" />
+        <rect x={left} y={top + h / 2} width={w / 2} height={h / 2} fill="rgba(0,0,0,0.45)" />
+        <rect x={left + w / 2} y={top + h / 2} width={w / 2} height={h / 2} fill="rgba(255,255,255,0.5)" />
+      </g>
     ) : flag.pattern === 'banner' ? (
-      <rect x={x} y={y} width={Math.abs(width)} height={height / 2} fill="rgba(0,0,0,0.15)" />
+      <g clipPath={`url(#${clipId})`}>
+        <rect x={left} y={top} width={w} height={h * 0.42} fill="rgba(0,0,0,0.48)" />
+        <rect x={left} y={top + h * 0.42} width={w} height={Math.max(2, h * 0.04)} fill="rgba(255,255,255,0.7)" />
+      </g>
     ) : null;
 
   return (
     <g style={{ ['--flag-bg' as string]: flag.background } as CSSProperties}>
+      <defs>
+        <clipPath id={clipId}>
+          <path d={`M ${x} ${y} h ${dir * width} q ${dir * 6} ${height / 2} 0 ${height} h ${dir * -width} Z`} />
+        </clipPath>
+      </defs>
       <path
         d={`M ${x} ${y} h ${dir * width} q ${dir * 6} ${height / 2} 0 ${height} h ${dir * -width} Z`}
         fill={flag.background}
@@ -134,6 +167,25 @@ function Emblem({
     case 'crown':
       return (
         <path d={`M ${cx - s} ${cy + s * 0.6} L ${cx - s} ${cy - s * 0.3} L ${cx - s * 0.4} ${cy} L ${cx} ${cy - s * 0.6} L ${cx + s * 0.4} ${cy} L ${cx + s} ${cy - s * 0.3} L ${cx + s} ${cy + s * 0.6} Z`} fill={color} stroke="none" />
+      );
+    case 'eagle':
+      return (
+        <g>
+          {/* wings */}
+          <path d={`M ${cx} ${cy - s * 0.2} Q ${cx - s * 0.9} ${cy - s * 0.9} ${cx - s * 1.1} ${cy - s * 0.1} Q ${cx - s * 0.7} ${cy - s * 0.2} ${cx - s * 0.5} ${cy + s * 0.1}`} {...common} />
+          <path d={`M ${cx} ${cy - s * 0.2} Q ${cx + s * 0.9} ${cy - s * 0.9} ${cx + s * 1.1} ${cy - s * 0.1} Q ${cx + s * 0.7} ${cy - s * 0.2} ${cx + s * 0.5} ${cy + s * 0.1}`} {...common} />
+          {/* body + head */}
+          <path d={`M ${cx - s * 0.35} ${cy + s * 0.5} Q ${cx} ${cy + s * 0.9} ${cx + s * 0.35} ${cy + s * 0.5} L ${cx + s * 0.2} ${cy - s * 0.1} L ${cx - s * 0.2} ${cy - s * 0.1} Z`} fill={color} stroke="none" />
+          <circle cx={cx} cy={cy - s * 0.35} r={s * 0.22} fill={color} />
+        </g>
+      );
+    case 'hourglass':
+      return (
+        <g>
+          <path d={`M ${cx - s * 0.8} ${cy - s} L ${cx + s * 0.8} ${cy - s} L ${cx} ${cy} L ${cx + s * 0.8} ${cy + s} L ${cx - s * 0.8} ${cy + s} L ${cx} ${cy} Z`} {...common} />
+          <line x1={cx - s * 0.9} y1={cy - s} x2={cx + s * 0.9} y2={cy - s} {...common} />
+          <line x1={cx - s * 0.9} y1={cy + s} x2={cx + s * 0.9} y2={cy + s} {...common} />
+        </g>
       );
     default:
       return null;
