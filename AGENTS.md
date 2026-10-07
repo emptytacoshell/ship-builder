@@ -7,7 +7,7 @@ Pirate Ship Builder — a client-only React + TypeScript + Vite single-page app 
 - `npm run dev` — start the Vite dev server (HMR).
 - `npm run build` — type-check with `tsc -b` and produce a production build in `dist/`.
 - `npm run typecheck` — type-check only (`tsc -b`), no output. Fast, side-effect-free way to verify types after a change.
-- `npm run lint` — run `oxlint` (config in `.oxlintrc.json`; react, typescript, oxc plugins).
+- `npm run lint` — run `oxlint` (config in `.oxlintrc.json`; react, typescript, oxc plugins, plus the `correctness` category which enables the React Compiler rules).
 - `npm run preview` — serve the production build.
 
 There is **no test framework** configured. Validate changes via `npm run typecheck` (for types) and `npm run lint`.
@@ -32,5 +32,6 @@ The app is a single `App` component (`src/App.tsx`) composed of two React Contex
 - **Sharing/serialization is base64url of the full `BuildState`.** `encodeBuild`/`decodeBuild` in `serialize.ts` are URL-safe; the initial build is resolved from `?build=` → localStorage → default via `resolveInitialBuild`. Keep the encoded token compact and self-contained (it's a `BuildState`, not a diff).
 - **The SVG preview has a stable id.** `SaveShare` finds the preview via `document.getElementById('ship-preview-svg')` for PNG export — preserve that element id if you touch `ShipPreview.tsx`.
 - **Styling is plain global CSS** (BEM-ish class names) in `App.css`/`index.css`, not CSS modules. Reuse existing class patterns (e.g. `option`, `swatch`, `btn`, `section`) and the frosted-glass panel layout.
+- **The React Compiler is enabled** (`react({ compiler: true })` in `vite.config.ts`, powered by `oxc-transform-react`). It auto-memoizes components/hooks, so keep components compliant with the [Rules of React](https://react.dev/learn/react-compiler) — no interior mutability or mutation-in-render; the compiler skips code that violates them. `useMemo`/`useCallback` are optional (the compiler adds them).
 - **Use `crypto.randomUUID()`** for `CrewMember.id`.
 - **TypeScript is run at maximum strictness.** `tsconfig.base.json` holds the shared strict flags (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns`, `noUncheckedSideEffectImports`, etc.); `tsconfig.app.json` (browser `src/`, DOM, bundler resolution) and `tsconfig.node.json` (`vite.config.ts`, Node, nodenext) only extend it with their environment-specific options. Make any strictness change in the base config. This is why the code uses `!` on known-safe index accesses and `| undefined` on optional props — keep new code consistent with that.
