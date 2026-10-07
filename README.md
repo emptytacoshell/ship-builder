@@ -9,7 +9,7 @@ Currently, two official plugins are available:
 
 ## React Compiler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The [React Compiler](https://react.dev/learn/react-compiler) is enabled via `@vitejs/plugin-react` (`react({ compiler: true })` in `vite.config.ts`) and powered by [`oxc-transform-react`](https://npmx.dev/package/oxc-transform-react). It automatically memoizes components and hooks for performance. To change its options, see the [React Compiler docs](https://react.dev/learn/react-compiler/installation).
 
 ## Expanding the Oxlint configuration
 

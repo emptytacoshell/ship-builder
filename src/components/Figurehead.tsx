@@ -73,7 +73,7 @@ export function Figurehead({
       shape = (
         <g>
           <path d={`M ${-10 * scale} ${6 * scale} Q ${-6 * scale} ${-6 * scale}, ${4 * scale} ${-8 * scale} L ${10 * scale} ${-4 * scale}`} {...line} />
-          <path d={`M ${4 * scale} ${-8 * scale} Q ${8 * scale} ${-2 * scale}, ${4 * scale} ${4 * scale} Q ${0 * scale} ${8 * scale}, ${-10 * scale} ${6 * scale}`} {...line} />
+          <path d={`M ${4 * scale} ${-8 * scale} Q ${8 * scale} ${-2 * scale}, ${4 * scale} ${4 * scale} Q ${0} ${8 * scale}, ${-10 * scale} ${6 * scale}`} {...line} />
           <path d={`M ${2 * scale} ${-6 * scale} L ${6 * scale} ${-12 * scale}`} {...line} />
         </g>
       );
