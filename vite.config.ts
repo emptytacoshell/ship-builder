@@ -3,9 +3,13 @@ import { defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react({ compiler: true })],
+  // The React Compiler transform is real overhead for tests (memoization is
+  // irrelevant there), so enable it only outside the Vitest run.
+  plugins: [react({ compiler: !process.env['VITEST'] })],
   test: {
+    globals: true,
     environment: 'happy-dom',
+    setupFiles: ['./src/test/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
