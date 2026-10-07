@@ -24,7 +24,7 @@ export const shipRanks: ShipRank[] = [
 /** Resolve the highest rank whose threshold the ship meets. */
 export function resolveRank(stats: Stats): ShipRank {
   const score = combatScore(stats);
-  let rank = shipRanks[0];
+  let rank = shipRanks[0]!;
   for (const r of shipRanks) {
     if (score >= r.minScore) rank = r;
   }

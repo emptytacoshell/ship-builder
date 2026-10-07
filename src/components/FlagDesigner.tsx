@@ -5,7 +5,7 @@ import { ColorSwatches, Section } from './ui';
 
 const patternOptions: { id: FlagPatternId; label: string }[] = flagPatterns.map((p) => ({
   id: p,
-  label: p[0].toUpperCase() + p.slice(1),
+  label: p[0]!.toUpperCase() + p.slice(1),
 }));
 
 export function FlagDesigner() {
