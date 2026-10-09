@@ -47,17 +47,19 @@ export interface CannonTierOption {
   perCannon: number;
   /** Durability cost per cannon (bigger guns strain the hull). */
   hullCostPerCannon: number;
+  /** Short description shown on hover in the ship preview. */
+  description: string;
 }
 
 export const cannonTiers: CannonTierOption[] = [
-  { id: 'none', label: 'None', perCannon: 0, hullCostPerCannon: 0 },
-  { id: 'swivel', label: 'Swivel', perCannon: 4, hullCostPerCannon: 0.5 },
-  { id: 'long', label: 'Long Gun', perCannon: 7, hullCostPerCannon: 1 },
-  { id: 'demi', label: 'Demi-Cannon', perCannon: 5, hullCostPerCannon: 0.75 },
-  { id: 'culverin', label: 'Culverin', perCannon: 11, hullCostPerCannon: 1.5 },
-  { id: 'mortar', label: 'Mortar', perCannon: 13, hullCostPerCannon: 2 },
-  { id: 'blunderbuss', label: 'Blunderbuss', perCannon: 3, hullCostPerCannon: 0.25 },
-  { id: 'naval', label: 'Naval Gun', perCannon: 9, hullCostPerCannon: 1.25 },
+  { id: 'none', label: 'None', perCannon: 0, hullCostPerCannon: 0, description: 'No armament mounted.' },
+  { id: 'swivel', label: 'Swivel', perCannon: 4, hullCostPerCannon: 0.5, description: 'Light pivot-mounted gun for close-range anti-boarding fire. +4 firepower, -0.5 durability each.' },
+  { id: 'long', label: 'Long Gun', perCannon: 7, hullCostPerCannon: 1, description: "The classic ship's gun. Long barrel, high velocity, devastating at range. +7 firepower, -1 durability each." },
+  { id: 'demi', label: 'Demi-Cannon', perCannon: 5, hullCostPerCannon: 0.75, description: 'Mid-sized cannon balanced for broadside volleys. +5 firepower, -0.75 durability each.' },
+  { id: 'culverin', label: 'Culverin', perCannon: 11, hullCostPerCannon: 1.5, description: 'Heavy long-barrelled gun that punches through armor. +11 firepower, -1.5 durability each.' },
+  { id: 'mortar', label: 'Mortar', perCannon: 13, hullCostPerCannon: 2, description: "Short-barrelled high-explosive weapon lobbed over the enemy's gunwales. +13 firepower, -2 durability each." },
+  { id: 'blunderbuss', label: 'Blunderbuss', perCannon: 3, hullCostPerCannon: 0.25, description: 'Short-stubby personal weapon for deck fights. +3 firepower, -0.25 durability each.' },
+  { id: 'naval', label: 'Naval Gun', perCannon: 9, hullCostPerCannon: 1.25, description: 'Purpose-built naval cannon with reinforced mount. +9 firepower, -1.25 durability each.' },
 ];
 
 export interface EmblemOption {
