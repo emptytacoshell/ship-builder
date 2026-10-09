@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { computeStats } from './stats';
 import { shipClasses } from '../data/shipClasses';
 import type { BuildState } from '../types/build';
