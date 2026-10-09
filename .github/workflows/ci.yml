@@ -11,8 +11,14 @@ concurrency:
 
 jobs:
   check:
-    name: Lint, type-check, test & build
+    name: ${{ matrix.command }}
     runs-on: ubuntu-latest
+    strategy:
+      # Run all checks in parallel; one failure shouldn't cancel the rest so
+      # you see every problem in a single run.
+      fail-fast: false
+      matrix:
+        command: [lint, typecheck, test]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,14 +32,24 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Lint
-        run: bun run lint
+      - name: Run ${{ matrix.command }}
+        run: bun run ${{ matrix.command }}
 
-      - name: Type-check
-        run: bun run typecheck
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Test
-        run: bun test
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+          cache: true
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
       - name: Build
         run: bun run build
