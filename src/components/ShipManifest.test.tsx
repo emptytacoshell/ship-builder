@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { ShipManifest } from './ShipManifest';
 import { renderWithBuild, sampleBuild } from '../test/render';
@@ -7,7 +6,7 @@ describe('ShipManifest', () => {
   it('renders the manifest text and copy button', () => {
     const build = sampleBuild();
     Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+      value: { writeText: jest.fn().mockResolvedValue(undefined) },
       writable: true,
     });
     renderWithBuild(<ShipManifest />, build);

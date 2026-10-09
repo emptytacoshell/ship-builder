@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { randomBuild } from './random';
 import { getShipClass } from '../data/shipClasses';
 import { crewRoles, woods, sailStyles, cannonTiers, emblems, figureheads } from '../data/parts';
