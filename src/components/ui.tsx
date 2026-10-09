@@ -14,7 +14,7 @@ export function OptionGrid<T extends string>({
   value,
   onSelect,
 }: {
-  options: { id: T; label: string }[];
+  options: { id: T; label: string; description?: string }[];
   value: T;
   onSelect: (id: T) => void;
 }) {
@@ -25,6 +25,7 @@ export function OptionGrid<T extends string>({
           key={opt.id}
           type="button"
           className={`option ${value === opt.id ? 'option--active' : ''}`}
+          title={opt.description}
           onClick={() => onSelect(opt.id)}
         >
           {opt.label}
