@@ -1,20 +1,20 @@
 # Agent Instructions
 
-Pirate Ship Builder — a client-only React + TypeScript + Vite single-page app for designing a pirate ship (hull, rigging, armament, flag, figurehead, crew), computing derived stats, and saving/sharing the result. There is no backend, no router, and no state-persistence library; everything runs in the browser.
+Pirate Ship Builder — a client-only React + TypeScript + Vite single-page app for designing a pirate ship (hull, rigging, armament, flag, figurehead, crew), computing derived stats, and saving/sharing the result. There is no backend, no router, and no state-persistence library; everything runs in the browser. The project uses **Bun** as its runtime and package manager (not Node.js/npm).
 
 ## Commands
 
-- `npm run dev` — start the Vite dev server (HMR).
-- `npm run build` — type-check with `tsc -b` and produce a production build in `dist/`.
-- `npm run typecheck` — type-check only (`tsc -b`), no output. Fast, side-effect-free way to verify types after a change.
-- `npm run lint` — run `oxlint` (config in `.oxlintrc.json`; react, typescript, oxc plugins, plus the `correctness` category which enables the React Compiler rules).
-- `npm run preview` — serve the production build.
-- `npm test` — run the Vitest suite once.
-- `npm run test:watch` — run Vitest in watch mode.
-- `npm run test:coverage` — run the suite with V8 code coverage (`text` + `lcov` reports in `coverage/`).
-- `npx vitest run src/lib/stats.test.ts` — run a single test file; add `-t "name"` to run one test by name, e.g. `npx vitest run src/lib/rank.test.ts -t "weights firepower"`.
+- `bun run dev` — start the Vite dev server (HMR).
+- `bun run build` — type-check with `tsc -b` and produce a production build in `dist/`.
+- `bun run typecheck` — type-check only (`tsc -b`), no output. Fast, side-effect-free way to verify types after a change.
+- `bun run lint` — run `oxlint` (config in `.oxlintrc.json`; react, typescript, oxc plugins, plus the `correctness` category which enables the React Compiler rules).
+- `bun run preview` — serve the production build.
+- `bun test` — run the test suite once.
+- `bun run test:watch` — run tests in watch mode.
+- `bun run test:coverage` — run the suite with built-in code coverage (`text` + `lcov` reports in `coverage/`).
+- `bun test src/lib/stats.test.ts` — run a single test file; add `--test-name-pattern="name"` to run one test by name, e.g. `bun test src/lib/rank.test.ts --test-name-pattern="weights firepower"`.
 
-Tests live in `src/**/*.test.ts(x)` (Vitest, `happy-dom` environment + `globals: true` configured in `vite.config.ts`; `@testing-library/jest-dom` matchers load via `src/test/setup.ts`). They cover the pure logic in `src/lib/`, the `reducer` in `src/state/build.tsx`, and React components via React Testing Library — use `renderWithBuild` / `sampleBuild` from `src/test/render.tsx` to render a component inside a seeded `BuildProvider`. Validate changes via `npm run typecheck` (types), `npm run lint`, and `npm test`.
+Tests live in `src/**/*.test.ts(x)` (Bun's native test runner, `happy-dom` globals registered via `@happy-dom/global-registrator` in the `bunfig.toml` preload; `@testing-library/jest-dom` matchers load via `src/test/setup.ts`). Test globals (`describe`, `it`, `expect`, `jest`) are provided by Bun — no import needed. They cover the pure logic in `src/lib/`, the `reducer` in `src/state/build.tsx`, and React components via React Testing Library — use `renderWithBuild` / `sampleBuild` from `src/test/render.tsx` to render a component inside a seeded `BuildProvider`. Validate changes via `bun run typecheck` (types), `bun run lint`, and `bun test`.
 
 ## Architecture
 

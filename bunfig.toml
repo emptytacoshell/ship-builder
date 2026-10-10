@@ -1,0 +1,5 @@
+[test]
+preload = ["./src/test/setup.ts"]
+coverageReporter = ["text", "lcov"]
+coverageDir = "coverage"
+coveragePathIgnorePatterns = ["src/main.tsx", "src/test/**"]

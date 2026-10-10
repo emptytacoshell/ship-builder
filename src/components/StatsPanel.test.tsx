@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { screen } from '@testing-library/react';
 import { StatsPanel } from './StatsPanel';
 import { renderWithBuild } from '../test/render';
