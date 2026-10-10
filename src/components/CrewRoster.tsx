@@ -56,7 +56,7 @@ export function CrewRoster() {
             />
             <button
               type="button"
-              className="btn btn--danger"
+              className="btn btn--danger crew__remove"
               onClick={() => dispatch({ type: 'removeCrew', id: member.id })}
               aria-label="Remove crew member"
             >

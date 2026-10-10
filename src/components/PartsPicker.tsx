@@ -15,7 +15,7 @@ export function PartsPicker() {
   if (!shipClass) return null;
 
   return (
-    <div className="picker">
+    <>
       <Section title="Ship Class">
         <OptionGrid
           options={shipClasses}
@@ -73,6 +73,6 @@ export function PartsPicker() {
           onSelect={(cannonTier) => dispatch({ type: 'setArmament', armament: { cannonTier } })}
         />
       </Section>
-    </div>
+    </>
   );
 }

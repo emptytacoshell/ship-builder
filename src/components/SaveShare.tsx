@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useBuild } from '../state/build';
 import { buildShareUrl, saveToStorage } from '../lib/serialize';
-import { Section } from './ui';
+import { exportShipPng } from '../lib/exportPng';
 
 export function SaveShare() {
   const { build, dispatch } = useBuild();
@@ -9,7 +9,7 @@ export function SaveShare() {
 
   const handleSave = () => {
     saveToStorage(build);
-    setMessage('Build saved to this ship.');
+    setMessage('Build saved to this browser.');
   };
 
   const handleShare = async () => {
@@ -23,25 +23,32 @@ export function SaveShare() {
     }
   };
 
+  const handleExport = () => {
+    const svg = document.getElementById('ship-preview-svg') as SVGSVGElement | null;
+    exportShipPng(svg, `${build.name.replace(/[^a-z0-9]/gi, '_')}_ship.png`);
+    setMessage('PNG exported — check your downloads.');
+  };
+
   const handleReset = () => {
     dispatch({ type: 'reset' });
     setMessage('A fresh deck awaits.');
   };
 
   return (
-    <Section title="Chart the Course">
-      <div className="save-share">
-        <button type="button" className="btn" onClick={handleSave}>
-          Save Build
-        </button>
-        <button type="button" className="btn" onClick={handleShare}>
-          Copy Share Link
-        </button>
-        <button type="button" className="btn btn--danger" onClick={handleReset}>
-          Reset
-        </button>
-      </div>
+    <div className="save-share" role="group" aria-label="Chart the Course">
+      <button type="button" className="scene-btn" onClick={handleSave}>
+        Save
+      </button>
+      <button type="button" className="scene-btn" onClick={handleShare}>
+        Copy Link
+      </button>
+      <button type="button" className="scene-btn" onClick={handleExport}>
+        Export PNG
+      </button>
+      <button type="button" className="scene-btn scene-btn--danger" onClick={handleReset}>
+        Reset
+      </button>
       {message && <p className="save-share__msg">{message}</p>}
-    </Section>
+    </div>
   );
 }

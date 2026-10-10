@@ -1,17 +1,31 @@
-/* Layout */
+/* Layout: a flex column that fills the viewport exactly — no page scroll.
+   The title sits in normal flow above the stage; the stage takes the rest.
+   Padding gives the rounded stage some breathing room from the edges. */
 .builder {
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 28px 20px 64px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+  padding: 14px 18px 18px;
 }
 
+/* Title lives outside the stage, on the parchment, in normal flow.
+   The brand sits on the left; the live ship name on the right. */
 .builder__header {
-  text-align: center;
-  margin-bottom: 28px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 16px 8px;
+}
+
+.builder__brand {
+  min-width: 0;
 }
 
 .builder__title {
-  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
   color: var(--wood-dark);
   text-shadow: 2px 2px 0 var(--gold);
 }
@@ -19,56 +33,242 @@
 .builder__tagline {
   color: var(--ink-soft);
   font-style: italic;
-  margin-top: 6px;
+  margin-top: 2px;
 }
 
-.builder__grid {
-  display: grid;
-  grid-template-columns: 320px minmax(0, 1fr) 340px;
-  gap: 20px;
-  align-items: start;
+.builder__shipname {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-weight: 700;
+  color: var(--wood-dark);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40%;
+  text-align: right;
 }
 
-.builder__col {
+/* Stage: fills all remaining vertical space as a non-cropped background
+   canvas, framed by a rounded wooden rectangle. Bare buttons float on top;
+   a frosted-glass carousel of equal-height panels runs along the bottom. */
+.builder__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  border: 4px solid var(--wood-dark);
+  border-radius: 16px;
+  /* Sky-to-sea gradient so the letterboxed edges blend into the scene. */
+  background: linear-gradient(180deg, #f2e2bd 0%, #d9b98a 55%, #1f5a6b 78%, #0f2f3a 100%);
 }
 
-/* Left-column panels (Ship Class, Hull, Rigging, Armament) share one wrapper. */
-.picker {
+.builder__stage-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* The ship is NOT cropped: it fits the whole canvas (letterboxed). */
+.builder__stage-bg .ship-preview--bg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Bare floating buttons along the top of the rendering. */
+.builder__topbar {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  pointer-events: none;
 }
 
-@media (max-width: 1100px) {
-  .builder__grid {
-    grid-template-columns: 1fr;
-  }
+.builder__topbar > * {
+  pointer-events: auto;
+}
+
+/* Chart the Course: bare buttons in a frosted pill on the top-right,
+   matching the scene-controls pill on the left. */
+.builder__topbar .save-share {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(243, 230, 200, 0.4);
+  backdrop-filter: blur(6px) saturate(1.1);
+  -webkit-backdrop-filter: blur(6px) saturate(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.builder__topbar .save-share__msg {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  white-space: nowrap;
+  background: rgba(42, 26, 14, 0.85);
+  color: var(--parchment);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+}
+
+/* Middle row: the Standing (left) and Manifest (right) panels fill the gap
+   between the top bar and the carousel with equal top/bottom margins. Being
+   in normal flow, they always clear the top bar even when it wraps. */
+.builder__mid {
+  position: relative;
+  z-index: 3;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  padding: 16px 16px;
+}
+
+/* Ship's Standing: left column of the middle row. */
+.builder__left {
+  width: 300px;
+  min-height: 0;
+}
+
+.builder__left .section {
+  background: rgba(243, 230, 200, 0.42);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Ship's Manifest: right column of the middle row, mirrors Standing. */
+.builder__right {
+  width: 300px;
+  min-height: 0;
+}
+
+.builder__right .section {
+  background: rgba(243, 230, 200, 0.42);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  height: 100%;
+}
+
+/* The panel carousel: horizontal scroll, all panels the same height.
+   Starts at the left edge — the Ship's Standing overlay floats in the gap
+   above it, so no left clearance is needed. */
+.builder__carousel {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  margin: 0 16px 16px;
+  padding-bottom: 4px;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+}
+.builder__carousel.carousel--no-left-fade {
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
+}
+.builder__carousel.carousel--no-right-fade {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 100%);
+}
+.builder__carousel.carousel--no-left-fade.carousel--no-right-fade {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* Every carousel panel shares one fixed height so they line up.
+   No inner scroll — content is sized to fit. */
+.builder__carousel > .section {
+  flex: 0 0 300px;
+  width: 300px;
+  height: 244px;
+  overflow: hidden;
+}
+
+/* Jolly Roger panel — keep compact so it fits the 300px cap. */
+.builder__carousel .section {
+  gap: 6px;
+}
+.builder__carousel .option-grid {
+  gap: 4px;
+}
+.builder__carousel .option {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.builder__carousel .swatches {
+  gap: 6px;
+}
+.builder__carousel .flag-preview {
+  padding: 2px;
+  margin-bottom: 0;
+}
+.builder__carousel .flag-preview svg {
+  max-width: 150px;
+}
+
+/* Frosted-glass look for the floating panels — a touch more opaque than the
+   manifest so the dark water behind doesn't read as see-through. */
+.builder__carousel .section {
+  background: rgba(243, 230, 200, 0.62);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Tiny swatches inside the carousel so Jolly Roger fits the panel height. */
+.builder__carousel .swatch {
+  width: 18px;
+  height: 18px;
 }
 
 /* Section card */
 .section {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   background: var(--parchment);
   border: 2px solid var(--wood);
   border-radius: 10px;
-  padding: 16px;
+  padding: 12px;
   box-shadow: 4px 4px 0 var(--shadow);
 }
 
 .section-title {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   color: var(--wood-dark);
   border-bottom: 2px dashed var(--rope);
-  padding-bottom: 6px;
+  padding-bottom: 4px;
 }
 
 .sub-label {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--ink-soft);
@@ -94,7 +294,7 @@
 .ship-name {
   font-family: var(--font-display);
   fill: var(--wood-dark);
-  font-size: 20px;
+  font-size: 0.8rem;
   letter-spacing: 2px;
 }
 
@@ -106,12 +306,12 @@
 }
 
 .option {
-  padding: 8px 12px;
+  padding: 5px 9px;
   border: 2px solid var(--wood);
   border-radius: 6px;
   background: var(--parchment);
   color: var(--ink);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   transition: transform 0.08s, background 0.15s, color 0.15s;
 }
 
@@ -133,8 +333,8 @@
 }
 
 .swatch {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 2px solid rgba(0, 0, 0, 0.2);
   transition: transform 0.08s;
@@ -153,23 +353,23 @@
 .stepper {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .stepper__label {
   flex: 1;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   color: var(--ink-soft);
 }
 
 .stepper__btn {
-  width: 32px;
-  height: 32px;
+  width: 31px;
+  height: 31px;
   border-radius: 6px;
   border: 2px solid var(--wood);
   background: var(--parchment);
-  font-size: 1.1rem;
+  font-size: 0.8rem;
   line-height: 1;
 }
 
@@ -179,22 +379,22 @@
 }
 
 .stepper__value {
-  min-width: 24px;
+  min-width: 20px;
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
 /* Inputs */
 .text-input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 6px 8px;
   border: 2px solid var(--wood);
   border-radius: 6px;
   background: var(--parchment);
   color: var(--ink);
-  font-size: 0.95rem;
-  margin-bottom: 10px;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
 }
 
 .text-input:focus {
@@ -204,26 +404,26 @@
 
 .select-input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 6px 8px;
   border: 2px solid var(--wood);
   border-radius: 6px;
   background: var(--parchment);
   color: var(--ink);
-  font-size: 0.95rem;
-  margin-bottom: 10px;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
 }
 
 /* Stats */
 .stats {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .stat__head {
   display: flex;
   justify-content: space-between;
-  font-size: 0.9rem;
+  font-size: 0.7rem;
   color: var(--ink-soft);
 }
 
@@ -233,10 +433,10 @@
 }
 
 .stat__track {
-  height: 14px;
-  margin-top: 4px;
+  height: 11px;
+  margin-top: 3px;
   border: 2px solid var(--wood);
-  border-radius: 7px;
+  border-radius: 6px;
   background: rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
@@ -251,14 +451,14 @@
 .flag-preview {
   background: rgba(0, 0, 0, 0.06);
   border-radius: 8px;
-  padding: 8px;
-  margin-bottom: 12px;
+  padding: 6px;
+  margin-bottom: 8px;
   display: flex;
   justify-content: center;
 }
 
 .flag-preview svg {
-  max-width: 240px;
+  max-width: 180px;
   width: 100%;
 }
 
@@ -266,18 +466,29 @@
 .crew {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+/* The crew list scrolls inside the fixed-height carousel panel once it
+   overflows, so recruiting more souls never pushes the panel open. */
+.builder__carousel .crew {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 2px;
 }
 
 .crew__empty {
+  font-size: 0.8rem;
   font-style: italic;
   color: var(--ink-soft);
 }
 
 .crew__member {
   display: grid;
-  grid-template-columns: 1fr 1fr 52px 34px;
+  grid-template-columns: 1fr 1fr 48px 32px;
   gap: 6px;
   align-items: center;
 }
@@ -286,6 +497,8 @@
 .crew__skill,
 .crew__member .select-input {
   margin-bottom: 0;
+  height: 32px;
+  box-sizing: border-box;
 }
 
 /* Buttons */
@@ -295,7 +508,7 @@
   border-radius: 6px;
   background: var(--wood);
   color: var(--parchment);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   transition: transform 0.08s, background 0.15s;
 }
 
@@ -314,8 +527,12 @@
 }
 
 .crew__member .btn--danger {
-  padding: 6px 0;
-  width: 34px;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 /* Save share */
@@ -329,27 +546,140 @@
   margin-top: 10px;
   font-style: italic;
   color: var(--wood-dark);
-  font-size: 0.85rem;
+  font-size: 0.7rem;
 }
 
 /* Manifest */
 .manifest {
   background: var(--wood-dark);
   color: var(--parchment);
-  padding: 12px;
+  padding: 10px;
   border-radius: 6px;
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   line-height: 1.4;
   white-space: pre-wrap;
-  margin-bottom: 10px;
-  max-height: 220px;
+  margin-bottom: 8px;
+  max-height: 160px;
   overflow: auto;
 }
 
 .manifest__keys {
   display: block;
-  margin-top: 10px;
-  font-size: 0.75rem;
+  margin-top: 8px;
+  font-size: 0.7rem;
   color: var(--ink-soft);
   letter-spacing: 0.5px;
+}
+
+/* Rank badge */
+.rank {
+  background: linear-gradient(135deg, var(--wood-dark), #2a1a0e);
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.rank__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rank__title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--gold-bright);
+  letter-spacing: 1px;
+}
+
+.rank__score {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--parchment-dark);
+}
+
+.rank__blurb {
+  margin: 6px 0 0;
+  font-size: 0.7rem;
+  font-style: italic;
+  color: var(--parchment);
+  line-height: 1.3;
+}
+
+/* Scene controls: a single frosted pill with time + weather in one line. */
+.scene-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(243, 230, 200, 0.4);
+  backdrop-filter: blur(6px) saturate(1.1);
+  -webkit-backdrop-filter: blur(6px) saturate(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.scene-controls__label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+  margin-left: 12px;
+  margin-right: 2px;
+}
+
+.scene-controls__divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(42, 26, 14, 0.3);
+  margin: 0 4px;
+}
+
+.scene-btn {
+  padding: 5px 0;
+  width: 90px;
+  text-align: center;
+  border: 1px solid rgba(42, 26, 14, 0.4);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ink);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  transition: transform 0.08s, background 0.15s;
+}
+
+.scene-btn:hover {
+  transform: translateY(-1px);
+}
+
+.scene-btn--active {
+  background: var(--wood);
+  color: var(--parchment);
+  border-color: var(--wood-dark);
+}
+
+.scene-btn--gold {
+  background: var(--gold);
+  color: var(--wood-dark);
+  border-color: var(--wood-dark);
+}
+
+.scene-btn--danger {
+  background: var(--danger);
+  color: var(--parchment);
+  border-color: #5a1c10;
+}
+
+/* Gold button */
+.btn--gold {
+  background: var(--gold);
+  color: var(--wood-dark);
+  border-color: var(--wood-dark);
+}
+
+.btn--gold:hover {
+  background: var(--gold-bright);
 }

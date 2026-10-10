@@ -1,13 +1,47 @@
 import type { BuildState } from '../types/build';
 import { getShipClass, type HullGeometry } from '../data/shipClasses';
+import { useScene, type TimeOfDay } from '../state/scene';
 import { Flag } from './Flag';
 import { Figurehead } from './Figurehead';
 
 const VB_W = 800;
 const VB_H = 460;
 const WATER_Y = 360;
+// Shift the whole scene upward so the hull clears the bottom carousel.
+const SCENE_SHIFT = 110;
 
-export function ShipPreview({ build }: { build: BuildState }) {
+interface Palette {
+  skyTop: string;
+  skyBottom: string;
+  sea: string;
+  seaDeep: string;
+  wave: string;
+  celestial: string;
+  celestialGlow: string;
+}
+
+const PALETTES: Record<TimeOfDay, Palette> = {
+  dawn: { skyTop: '#f6c9a0', skyBottom: '#d98a6a', sea: '#3a5f6b', seaDeep: '#24424c', wave: '#d8b48a', celestial: '#ffd27f', celestialGlow: '#ffb35a' },
+  day:  { skyTop: '#f2e2bd', skyBottom: '#d9b98a', sea: '#1f5a6b', seaDeep: '#0f2f3a', wave: '#bcd8dc', celestial: '#f4d98b', celestialGlow: '#f4d98b' },
+  dusk: { skyTop: '#e08a5a', skyBottom: '#8a5a6b', sea: '#4a3a5a', seaDeep: '#241c33', wave: '#c98a6a', celestial: '#ff9a5a', celestialGlow: '#e06a3a' },
+  night:{ skyTop: '#1b2a4d', skyBottom: '#0f1830', sea: '#12203a', seaDeep: '#080f1e', wave: '#3a5a7a', celestial: '#e8e8f0', celestialGlow: '#aab0cc' },
+};
+
+const STARS: ReadonlyArray<readonly [number, number]> = [
+  [80, 60], [150, 100], [230, 40], [320, 90], [410, 50],
+  [500, 110], [590, 60], [680, 90], [740, 40], [120, 140],
+  [380, 140], [620, 150], [270, 70], [700, 120],
+];
+
+export function ShipPreview({ build, background = false }: { build: BuildState; background?: boolean }) {
+  const { scene } = useScene();
+  const { timeOfDay, weather } = scene;
+  const palette = PALETTES[timeOfDay];
+
+  const isNight = timeOfDay === 'night';
+  const isStorm = weather === 'storm';
+  const isWindy = weather === 'windy';
+
   const shipClass = getShipClass(build.shipClassId);
   const masts = Math.min(build.rigging.mastCount, shipClass.maxMasts);
   const geo = shipClass.hull;
@@ -25,15 +59,42 @@ export function ShipPreview({ build }: { build: BuildState }) {
     masts === 1 ? [cx] : Array.from({ length: masts }, (_, i) => startX + (mastSpan / (masts - 1)) * i);
 
   return (
-    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="ship-preview" role="img" aria-label={build.name}>
+    <svg
+      id="ship-preview-svg"
+      viewBox={`0 0 ${VB_W} ${VB_H}`}
+      className={background ? 'ship-preview ship-preview--bg' : 'ship-preview'}
+      preserveAspectRatio={background ? 'xMidYMin slice' : 'xMidYMid meet'}
+      role="img"
+      aria-label={build.name}
+    >
+      <style>{`
+        @keyframes ship-bob {
+          0%   { transform: translateY(0px) rotate(0deg); }
+          50%  { transform: translateY(5px) rotate(-0.6deg); }
+          100% { transform: translateY(0px) rotate(0deg); }
+        }
+        @keyframes wave-drift { from { transform: translateX(0); } to { transform: translateX(-80px); } }
+        @keyframes wave-drift-slow { from { transform: translateX(0); } to { transform: translateX(80px); } }
+        @keyframes cloud-drift { from { transform: translateX(-120px); } to { transform: translateX(900px); } }
+        @keyframes rain-fall { from { transform: translateY(-60px); } to { transform: translateY(480px); } }
+        @keyframes lightning { 0%, 92%, 100% { opacity: 0; } 93%, 95% { opacity: 0.5; } 94% { opacity: 0.15; } }
+        @keyframes celestial-pulse { 0%, 100% { opacity: 0.75; } 50% { opacity: 0.95; } }
+        .ship-bob { animation: ship-bob 4.5s ease-in-out infinite; transform-origin: ${cx}px ${WATER_Y}px; }
+        .wave-a { animation: wave-drift ${isStorm ? 3 : 7}s linear infinite; }
+        .wave-b { animation: wave-drift-slow ${isStorm ? 4 : 9}s linear infinite; }
+        .cloud { animation: cloud-drift ${isWindy ? 14 : 40}s linear infinite; }
+        .rain-drop { animation: rain-fall 0.7s linear infinite; }
+        .lightning { animation: lightning 5s linear infinite; }
+        .celestial { animation: celestial-pulse 5s ease-in-out infinite; }
+      `}</style>
       <defs>
         <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1f5a6b" />
-          <stop offset="100%" stopColor="#0f2f3a" />
+          <stop offset="0%" stopColor={palette.sea} />
+          <stop offset="100%" stopColor={palette.seaDeep} />
         </linearGradient>
         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f2e2bd" />
-          <stop offset="100%" stopColor="#d9b98a" />
+          <stop offset="0%" stopColor={palette.skyTop} />
+          <stop offset="100%" stopColor={palette.skyBottom} />
         </linearGradient>
         <linearGradient id="hullShade" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#00000000" />
@@ -41,41 +102,95 @@ export function ShipPreview({ build }: { build: BuildState }) {
         </linearGradient>
       </defs>
 
-      <rect x={0} y={0} width={VB_W} height={VB_H} fill="url(#sky)" />
-      <circle cx={650} cy={90} r={44} fill="#f4d98b" opacity={0.8} />
-      <rect x={0} y={WATER_Y} width={VB_W} height={VB_H - WATER_Y} fill="url(#sea)" />
+      <g transform={`translate(0 ${-SCENE_SHIFT})`}>
+      {/* Sky */}
+      <rect x={0} y={0} width={VB_W} height={WATER_Y} fill="url(#sky)" />
 
-      {/* Waves */}
-      <g stroke="#bcd8dc" strokeWidth={2} fill="none" opacity={0.5}>
-        <path d={`M 20 ${WATER_Y + 20} q 40 -10 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
-        <path d={`M 20 ${WATER_Y + 40} q 40 -8 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
+      {/* Stars at night */}
+      {isNight && (
+        <g fill="#ffffff">
+          {STARS.map(([sx, sy], i) => (
+            <circle key={i} cx={sx} cy={sy} r={i % 3 === 0 ? 1.6 : 1} opacity={0.9} />
+          ))}
+        </g>
+      )}
+
+      {/* Sun / moon */}
+      <circle cx={650} cy={90} r={60} fill={palette.celestialGlow} opacity={0.18} />
+      <circle className="celestial" cx={650} cy={90} r={isNight ? 26 : 44} fill={palette.celestial} opacity={0.9} />
+
+      {/* Clouds when windy or in a storm */}
+      {(isWindy || isStorm) && (
+        <g fill={isStorm ? '#3a4150' : '#ffffff'} opacity={isStorm ? 0.8 : 0.7}>
+          <g className="cloud">
+            <Cloud x={-40} y={70} scale={1} />
+            <Cloud x={420} y={50} scale={1.3} />
+          </g>
+        </g>
+      )}
+
+      {/* Sea */}
+      <rect x={0} y={WATER_Y} width={VB_W} height={VB_H - WATER_Y + SCENE_SHIFT} fill="url(#sea)" />
+
+      {/* Animated waves */}
+      <g className="wave-a" stroke={palette.wave} strokeWidth={2} fill="none" opacity={isStorm ? 0.7 : 0.5}>
+        <path d={`M -80 ${WATER_Y + 20} q 40 -10 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
+      </g>
+      <g className="wave-b" stroke={palette.wave} strokeWidth={2} fill="none" opacity={isStorm ? 0.55 : 0.35}>
+        <path d={`M -80 ${WATER_Y + 42} q 40 -8 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
       </g>
 
-      {/* Sails + masts */}
-      {mastXs.map((mx, i) => (
-        <g key={i}>
-          <line x1={mx} y1={mastTopY(i)} x2={mx} y2={deckY} stroke="#3a2417" strokeWidth={5} />
-          <Sail style={build.rigging.sailStyle} color={build.rigging.sailColor} x={mx} top={mastTopY(i)} deckY={deckY} />
+      {/* The ship, gently bobbing on the water */}
+      <g className="ship-bob">
+        {/* Sails + masts */}
+        {mastXs.map((mx, i) => (
+          <g key={i}>
+            <line x1={mx} y1={mastTopY(i)} x2={mx} y2={deckY} stroke="#3a2417" strokeWidth={5} />
+            <Sail style={build.rigging.sailStyle} color={build.rigging.sailColor} x={mx} top={mastTopY(i)} deckY={deckY} />
+          </g>
+        ))}
+
+        {/* Flag on the rearmost (leftmost) mast */}
+        <Flag flag={build.flag} originX={mastXs[0]} originY={mastTopY(0)} fly={1} />
+
+        {/* Hull */}
+        <Hull build={build} geo={geo} />
+
+        {/* Cannons (mounted across the hull's gun decks) */}
+        <Cannons count={build.armament.cannonCount} geo={geo} />
+
+        {/* Figurehead at the bow (front of the hull) */}
+        <Figurehead figurehead={build.figurehead} x={bowX - 12} y={deckY + 16} scale={1.1} />
+      </g>
+
+      {/* Rain for a storm */}
+      {isStorm && (
+        <g stroke="#9fb8c9" strokeWidth={1.5} opacity={0.6}>
+          {Array.from({ length: 40 }, (_, i) => {
+            const x = (i * 53) % VB_W;
+            return (
+              <line key={i} className="rain-drop" x1={x} y1={-20} x2={x - 10} y2={10} style={{ animationDelay: `${(i % 8) * 0.09}s` }} />
+            );
+          })}
         </g>
-      ))}
+      )}
 
-      {/* Flag on the rearmost (leftmost) mast */}
-      <Flag flag={build.flag} originX={mastXs[0]} originY={mastTopY(0)} fly={1} />
-
-      {/* Hull */}
-      <Hull build={build} geo={geo} />
-
-      {/* Cannons (mounted across the hull's gun decks) */}
-      <Cannons count={build.armament.cannonCount} geo={geo} />
-
-      {/* Figurehead at the bow (front of the hull) */}
-      <Figurehead figurehead={build.figurehead} x={bowX - 12} y={deckY + 16} scale={1.1} />
-
-      {/* Name plate */}
-      <text x={cx} y={VB_H - 16} textAnchor="middle" className="ship-name">
-        {build.name}
-      </text>
+      {/* Lightning flash + storm dimming */}
+      {isStorm && <rect className="lightning" x={0} y={0} width={VB_W} height={VB_H} fill="#ffffff" opacity={0} />}
+      {isStorm && <rect x={0} y={0} width={VB_W} height={VB_H} fill="#0a1520" opacity={0.25} />}
+      </g>
     </svg>
+  );
+}
+
+function Cloud({ x, y, scale }: { x: number; y: number; scale: number }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <ellipse cx={0} cy={0} rx={46} ry={20} />
+      <ellipse cx={36} cy={6} rx={40} ry={22} />
+      <ellipse cx={-34} cy={8} rx={34} ry={18} />
+      <ellipse cx={12} cy={-12} rx={32} ry={18} />
+    </g>
   );
 }
 
