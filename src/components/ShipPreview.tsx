@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type { BuildState } from '../types/build';
 import { getShipClass, type HullGeometry } from '../data/shipClasses';
 import { useScene, type TimeOfDay } from '../state/scene';
@@ -9,6 +10,12 @@ const VB_H = 460;
 const WATER_Y = 360;
 // Shift the whole scene upward so the hull clears the bottom carousel.
 const SCENE_SHIFT = 110;
+// How far the sky/sea/waves extend beyond the frame so zooming out never
+// reveals gaps at the edges (covers the full frame down to the min zoom).
+const BLEED = 1200;
+// A repeating wave path that spans the full bled width.
+const wavePath = (y: number, amp: number) =>
+  `M ${-BLEED} ${y} q 40 ${-amp} 80 0 ` + 't 80 0 '.repeat(Math.ceil((VB_W + 2 * BLEED) / 80));
 
 interface Palette {
   skyTop: string;
@@ -58,9 +65,86 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
   const mastXs =
     masts === 1 ? [cx] : Array.from({ length: masts }, (_, i) => startX + (mastSpan / (masts - 1)) * i);
 
+  // Focus zoom: when a part is changed, briefly zoom the preview onto that
+  // region so the user sees the update, then ease back to the full view.
+  const [focus, setFocus] = useState<{ x: number; y: number; zoom: number } | null>(null);
+  const prevBuild = useRef<BuildState>(build);
+  useEffect(() => {
+    const prev = prevBuild.current;
+    prevBuild.current = build;
+    if (prev === build) return;
+
+    let target: { x: number; y: number; zoom: number } | null = null;
+    if (prev.shipClassId !== build.shipClassId) {
+      target = { x: cx, y: (deckY + WATER_Y) / 2, zoom: 1.25 };
+    } else if (prev.hull !== build.hull) {
+      target = { x: cx, y: (deckY + WATER_Y + geo.keel) / 2, zoom: 1.4 };
+    } else if (prev.rigging !== build.rigging) {
+      target = { x: cx, y: mastTopY(0) + 24, zoom: 1.5 };
+    } else if (prev.armament !== build.armament) {
+      target = { x: cx, y: deckY + geo.freeboard * 0.45, zoom: 1.5 };
+    } else if (prev.flag !== build.flag) {
+      target = { x: mastXs[0], y: mastTopY(0) + 14, zoom: 2 };
+    } else if (prev.figurehead !== build.figurehead) {
+      target = { x: bowX - 12, y: deckY + 16, zoom: 2.2 };
+    }
+
+    if (!target) return;
+    setFocus(target);
+    const id = window.setTimeout(() => setFocus(null), 2500);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build]);
+
+  // Persistent user zoom (scroll wheel / arrow keys) anchored on the ship
+  // center. Composes on top of the temporary focus zoom; dblclick resets.
+  const [zoom, setZoom] = useState(1);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const clampZoom = (z: number) => Math.min(3, Math.max(0.5, z));
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      setZoom((z) => clampZoom(z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+    };
+    const onDblClick = () => setZoom(1);
+    svg.addEventListener('wheel', onWheel, { passive: false });
+    svg.addEventListener('dblclick', onDblClick);
+    return () => {
+      svg.removeEventListener('wheel', onWheel);
+      svg.removeEventListener('dblclick', onDblClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setZoom((z) => clampZoom(z + 0.1));
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setZoom((z) => clampZoom(z - 0.1));
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const zoomCenterY = WATER_Y - geo.freeboard * 0.5;
+  const userTransform = `translate(${cx} ${zoomCenterY}) scale(${zoom}) translate(${-cx} ${-zoomCenterY})`;
+  const focusTransform = focus
+    ? `translate(${focus.x} ${focus.y}) scale(${focus.zoom}) translate(${-focus.x} ${-focus.y})`
+    : undefined;
+  const sceneTransform = [userTransform, focusTransform].filter(Boolean).join(' ');
+
   return (
     <svg
       id="ship-preview-svg"
+      ref={svgRef}
       viewBox={`0 0 ${VB_W} ${VB_H}`}
       className={background ? 'ship-preview ship-preview--bg' : 'ship-preview'}
       preserveAspectRatio={background ? 'xMidYMin slice' : 'xMidYMid meet'}
@@ -86,13 +170,16 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
         .rain-drop { animation: rain-fall 0.7s linear infinite; }
         .lightning { animation: lightning 5s linear infinite; }
         .celestial { animation: celestial-pulse 5s ease-in-out infinite; }
+        .focus-layer { transition: transform 0.3s cubic-bezier(0.34, 1.2, 0.5, 1); }
       `}</style>
       <defs>
-        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+        {/* Gradients are anchored in user space so the bled rects keep the
+            same colors as the original frame instead of stretching. */}
+        <linearGradient id="sea" gradientUnits="userSpaceOnUse" x1="0" y1={WATER_Y} x2="0" y2={VB_H + SCENE_SHIFT}>
           <stop offset="0%" stopColor={palette.sea} />
           <stop offset="100%" stopColor={palette.seaDeep} />
         </linearGradient>
-        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="sky" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={WATER_Y}>
           <stop offset="0%" stopColor={palette.skyTop} />
           <stop offset="100%" stopColor={palette.skyBottom} />
         </linearGradient>
@@ -103,8 +190,9 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
       </defs>
 
       <g transform={`translate(0 ${-SCENE_SHIFT})`}>
-      {/* Sky */}
-      <rect x={0} y={0} width={VB_W} height={WATER_Y} fill="url(#sky)" />
+      <g className="focus-layer" transform={sceneTransform}>
+      {/* Sky (bled so it covers the frame at any zoom) */}
+      <rect x={-BLEED} y={-BLEED} width={VB_W + 2 * BLEED} height={WATER_Y + BLEED} fill="url(#sky)" />
 
       {/* Stars at night */}
       {isNight && (
@@ -129,15 +217,15 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
         </g>
       )}
 
-      {/* Sea */}
-      <rect x={0} y={WATER_Y} width={VB_W} height={VB_H - WATER_Y + SCENE_SHIFT} fill="url(#sea)" />
+      {/* Sea (bled so it covers the frame at any zoom) */}
+      <rect x={-BLEED} y={WATER_Y} width={VB_W + 2 * BLEED} height={VB_H - WATER_Y + SCENE_SHIFT + BLEED} fill="url(#sea)" />
 
       {/* Animated waves */}
       <g className="wave-a" stroke={palette.wave} strokeWidth={2} fill="none" opacity={isStorm ? 0.7 : 0.5}>
-        <path d={`M -80 ${WATER_Y + 20} q 40 -10 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
+        <path d={wavePath(WATER_Y + 20, 10)} />
       </g>
       <g className="wave-b" stroke={palette.wave} strokeWidth={2} fill="none" opacity={isStorm ? 0.55 : 0.35}>
-        <path d={`M -80 ${WATER_Y + 42} q 40 -8 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
+        <path d={wavePath(WATER_Y + 42, 8)} />
       </g>
 
       {/* The ship, gently bobbing on the water */}
@@ -178,6 +266,7 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
       {/* Lightning flash + storm dimming */}
       {isStorm && <rect className="lightning" x={0} y={0} width={VB_W} height={VB_H} fill="#ffffff" opacity={0} />}
       {isStorm && <rect x={0} y={0} width={VB_W} height={VB_H} fill="#0a1520" opacity={0.25} />}
+      </g>
       </g>
     </svg>
   );
