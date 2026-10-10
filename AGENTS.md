@@ -9,8 +9,12 @@ Pirate Ship Builder — a client-only React + TypeScript + Vite single-page app 
 - `npm run typecheck` — type-check only (`tsc -b`), no output. Fast, side-effect-free way to verify types after a change.
 - `npm run lint` — run `oxlint` (config in `.oxlintrc.json`; react, typescript, oxc plugins, plus the `correctness` category which enables the React Compiler rules).
 - `npm run preview` — serve the production build.
+- `npm test` — run the Vitest suite once.
+- `npm run test:watch` — run Vitest in watch mode.
+- `npm run test:coverage` — run the suite with V8 code coverage (`text` + `lcov` reports in `coverage/`).
+- `npx vitest run src/lib/stats.test.ts` — run a single test file; add `-t "name"` to run one test by name, e.g. `npx vitest run src/lib/rank.test.ts -t "weights firepower"`.
 
-There is **no test framework** configured. Validate changes via `npm run typecheck` (for types) and `npm run lint`.
+Tests live in `src/**/*.test.ts(x)` (Vitest, `happy-dom` environment + `globals: true` configured in `vite.config.ts`; `@testing-library/jest-dom` matchers load via `src/test/setup.ts`). They cover the pure logic in `src/lib/`, the `reducer` in `src/state/build.tsx`, and React components via React Testing Library — use `renderWithBuild` / `sampleBuild` from `src/test/render.tsx` to render a component inside a seeded `BuildProvider`. Validate changes via `npm run typecheck` (types), `npm run lint`, and `npm test`.
 
 ## Architecture
 
