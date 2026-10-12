@@ -1,4 +1,4 @@
-import type { BuildState } from '../types/build';
+import type { BuildState, CannonTierId } from '../types/build';
 import { getShipClass, type HullGeometry } from '../data/shipClasses';
 import { useScene, type TimeOfDay } from '../state/scene';
 import { Flag } from './Flag';
@@ -158,7 +158,7 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
         <Hull build={build} geo={geo} />
 
         {/* Cannons (mounted across the hull's gun decks) */}
-        <Cannons count={build.armament.cannonCount} geo={geo} />
+        <Cannons count={build.armament.cannonCount} tier={build.armament.cannonTier} geo={geo} />
 
         {/* Figurehead at the bow (front of the hull) */}
         <Figurehead figurehead={build.figurehead} x={bowX - 12} y={deckY + 16} scale={1.1} />
@@ -395,7 +395,7 @@ function Hull({ build, geo }: { build: BuildState; geo: HullGeometry }) {
   );
 }
 
-function Cannons({ count, geo }: { count: number; geo: HullGeometry }) {
+function Cannons({ count, tier, geo }: { count: number; tier: CannonTierId; geo: HullGeometry }) {
   if (count <= 0) return null;
   const cx = VB_W / 2;
   const deckY = WATER_Y - geo.freeboard;
@@ -432,15 +432,88 @@ function Cannons({ count, geo }: { count: number; geo: HullGeometry }) {
         return (
           <g key={d}>
             {xs.map((gx, i) => (
-              <g key={i}>
-                <rect x={gx - gunSize} y={y - gunSize * 0.85} width={gunSize * 2} height={gunSize * 1.7} rx={2} fill="#160c05" />
-                <line x1={gx} y1={y} x2={gx + gunSize * 2} y2={y - gunSize * 0.2} stroke="#2b2b2b" strokeWidth={gunSize * 0.55} strokeLinecap="round" />
-                <circle cx={gx} cy={y} r={gunSize * 0.42} fill="#3d3d3d" />
-              </g>
+              <CannonShape key={i} x={gx} y={y} size={gunSize} tier={tier} />
             ))}
           </g>
         );
       })}
     </g>
   );
+}
+
+/** Renders a single cannon with a distinct shape per tier. */
+function CannonShape({ x, y, size, tier }: { x: number; y: number; size: number; tier: CannonTierId }) {
+  const s = size; // shorthand
+  switch (tier) {
+    case 'blunderbuss':
+      // Tiny body with a very short stubby barrel
+      return (
+        <g>
+          <ellipse cx={x} cy={y} rx={s * 0.5} ry={s * 0.45} fill="#1a0e06" stroke="#2a1a0a" strokeWidth={0.8} />
+          <line x1={x + s * 0.3} y1={y} x2={x + s * 0.8} y2={y} stroke="#3a3a3a" strokeWidth={s * 0.3} strokeLinecap="round" />
+        </g>
+      );
+    case 'swivel':
+      // Small body on a visible pivot mount, short barrel angled slightly up
+      return (
+        <g>
+          <rect x={x - s * 0.55} y={y + s * 0.3} width={s * 1.1} height={s * 0.35} rx={1.5} fill="#2a1a0e" />
+          <circle cx={x} cy={y} r={s * 0.4} fill="#1e1208" stroke="#3a2a18" strokeWidth={0.8} />
+          <line x1={x} y1={y} x2={x + s * 1.1} y2={y - s * 0.4} stroke="#444" strokeWidth={s * 0.35} strokeLinecap="round" />
+          <circle cx={x + s * 1.1} cy={y - s * 0.4} r={s * 0.15} fill="#555" />
+        </g>
+      );
+    case 'demi':
+      // Medium standard rectangular body, medium barrel
+      return (
+        <g>
+          <rect x={x - s * 0.8} y={y - s * 0.6} width={s * 1.6} height={s * 1.2} rx={2} fill="#160c05" />
+          <line x1={x + s * 0.6} y1={y} x2={x + s * 1.8} y2={y} stroke="#2b2b2b" strokeWidth={s * 0.45} strokeLinecap="round" />
+          <circle cx={x} cy={y} r={s * 0.3} fill="#3d3d3d" />
+        </g>
+      );
+    case 'long':
+      // Elongated thin barrel, narrower profile
+      return (
+        <g>
+          <rect x={x - s * 0.7} y={y - s * 0.45} width={s * 1.4} height={s * 0.9} rx={1.5} fill="#120a04" />
+          <line x1={x + s * 0.5} y1={y} x2={x + s * 2.4} y2={y} stroke="#2e2e2e" strokeWidth={s * 0.3} strokeLinecap="round" />
+          <line x1={x + s * 2.4} y1={y - s * 0.12} x2={x + s * 2.4} y2={y + s * 0.12} stroke="#444" strokeWidth={s * 0.18} />
+        </g>
+      );
+    case 'culverin':
+      // Thick wide barrel, bulky body
+      return (
+        <g>
+          <rect x={x - s * 0.9} y={y - s * 0.75} width={s * 1.8} height={s * 1.5} rx={2.5} fill="#0e0804" />
+          <rect x={x - s * 0.9} y={y - s * 0.75} width={s * 1.8} height={s * 0.4} rx={2} fill="#1a1008" opacity={0.5} />
+          <line x1={x + s * 0.7} y1={y} x2={x + s * 1.9} y2={y} stroke="#333" strokeWidth={s * 0.65} strokeLinecap="round" />
+          <circle cx={x} cy={y} r={s * 0.38} fill="#4a4a4a" />
+        </g>
+      );
+    case 'naval':
+      // Large barrel with a distinctive muzzle band ring
+      return (
+        <g>
+          <rect x={x - s * 0.85} y={y - s * 0.7} width={s * 1.7} height={s * 1.4} rx={2} fill="#0c0703" />
+          <line x1={x + s * 0.6} y1={y} x2={x + s * 2.1} y2={y} stroke="#2a2a2a" strokeWidth={s * 0.55} strokeLinecap="round" />
+          {/* muzzle band */}
+          <rect x={x + s * 1.95} y={y - s * 0.35} width={s * 0.2} height={s * 0.7} rx={1} fill="#5a5a5a" />
+          <circle cx={x} cy={y} r={s * 0.35} fill="#484848" />
+        </g>
+      );
+    case 'mortar':
+      // Squat wide cylinder, short wide bore pointing slightly upward
+      return (
+        <g>
+          <ellipse cx={x} cy={y} rx={s * 0.85} ry={s * 0.6} fill="#0a0603" stroke="#1e1408" strokeWidth={1} />
+          <ellipse cx={x + s * 0.3} cy={y - s * 0.15} rx={s * 0.45} ry={s * 0.35} fill="#1a1208" />
+          <line x1={x + s * 0.5} y1={y - s * 0.1} x2={x + s * 1.1} y2={y - s * 0.5} stroke="#3a3a3a" strokeWidth={s * 0.5} strokeLinecap="round" />
+          <circle cx={x + s * 1.1} cy={y - s * 0.5} r={s * 0.2} fill="#555" />
+        </g>
+      );
+    default:
+      // 'none' — nothing to draw
+      return null;
+  }
 }
