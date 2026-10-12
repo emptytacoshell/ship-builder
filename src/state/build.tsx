@@ -27,7 +27,7 @@ export interface BuildContextValue {
 }
 
 function defaultBuild(): BuildState {
-  const first = shipClasses[0];
+  const first = shipClasses[0]!;
   return { shipClassId: first.id, ...first.defaultBuild, crew: [] };
 }
 
@@ -118,7 +118,7 @@ function reducer(state: BuildState, action: BuildAction): BuildState {
 
 const BuildContext = createContext<BuildContextValue | null>(null);
 
-export function BuildProvider({ children, initial }: { children: ReactNode; initial?: BuildState }) {
+export function BuildProvider({ children, initial }: { children: ReactNode; initial?: BuildState | undefined }) {
   const [build, dispatch] = useReducer(reducer, initial ?? defaultBuild(), clampToClass);
   const stats = useMemo(() => computeStats(build), [build]);
   const value = useMemo(() => ({ build, stats, dispatch }), [build, stats]);
