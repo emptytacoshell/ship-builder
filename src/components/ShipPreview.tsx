@@ -114,28 +114,44 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
   // zoom (also gives "auto-scale when ship type is changed"). Recomputes on
   // resize and whenever the ship class (hull size) changes.
   useEffect(() => {
+    const svg = svgRef.current;
+    const stage = svg?.closest('.builder__stage');
+    const mid = stage?.querySelector('.builder__mid');
+    if (!stage || !mid) return;
+
     const compute = () => {
-      const svg = svgRef.current;
-      const stage = svg?.closest('.builder__stage');
-      if (!stage) return;
       const stageRect = stage.getBoundingClientRect();
-      if (stageRect.width === 0) return;
-      const left = stage.querySelector('.builder__mid .builder__left');
-      const right = stage.querySelector('.builder__mid .builder__right');
-      let gap = stageRect.width;
+      const midRect = mid.getBoundingClientRect();
+      if (stageRect.width === 0 || midRect.width === 0) return;
+
+      const left = mid.querySelector('.builder__left');
+      const right = mid.querySelector('.builder__right');
+
+      let availableWidth = midRect.width;
       if (left && right) {
-        const lr = left.getBoundingClientRect();
-        const rr = right.getBoundingClientRect();
-        gap = Math.max(140, rr.left - lr.right);
+        const leftRect = left.getBoundingClientRect();
+        const rightRect = right.getBoundingClientRect();
+        const gap = rightRect.left - leftRect.right;
+        if (gap > 0) availableWidth = gap;
       }
+
       const pxPerUnit = Math.max(stageRect.width / VB_W, stageRect.height / VB_H);
-      const gapViewBox = gap / pxPerUnit;
       const shipViewBox = geo.halfLen * 2 * 1.18; // margin for bowsprit/figurehead
-      setFitZoom(Math.min(2, Math.max(0.35, gapViewBox / shipViewBox)));
+      const nextFitZoom = Math.min(2, Math.max(0.35, (availableWidth / pxPerUnit) / shipViewBox));
+      setFitZoom((current) => (Math.abs(current - nextFitZoom) < 0.01 ? current : nextFitZoom));
     };
+
     compute();
+
+    const resizeObserver = new ResizeObserver(() => compute());
+    resizeObserver.observe(stage);
+    resizeObserver.observe(mid);
+
     window.addEventListener('resize', compute);
-    return () => window.removeEventListener('resize', compute);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', compute);
+    };
   }, [geo.halfLen]);
 
   // Wheel + double-click live on the STAGE (not the SVG) so the whole preview
@@ -144,7 +160,8 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
   useEffect(() => {
     const stage = svgRef.current?.closest('.builder__stage');
     if (!stage) return;
-    const onWheel = (e: WheelEvent) => {
+    const onWheel: EventListener = (event) => {
+      const e = event as WheelEvent;
       const carousel = stage.querySelector('.builder__carousel');
       if (carousel && e.target instanceof Node && carousel.contains(e.target)) return;
       e.preventDefault();
