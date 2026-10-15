@@ -16,6 +16,9 @@ const BLEED = 1200;
 // A repeating wave path that spans the full bled width.
 const wavePath = (y: number, amp: number) =>
   `M ${-BLEED} ${y} q 40 ${-amp} 80 0 ` + 't 80 0 '.repeat(Math.ceil((VB_W + 2 * BLEED) / 80));
+// Bounds for the combined (auto-fit × user) zoom scale.
+const MIN_SCALE = 0.3;
+const MAX_SCALE = 4;
 
 interface Palette {
   skyTop: string;
@@ -98,23 +101,61 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
 
   // Persistent user zoom (scroll wheel / arrow keys) anchored on the ship
   // center. Composes on top of the temporary focus zoom; dblclick resets.
-  const [zoom, setZoom] = useState(1);
+  // Persistent user zoom, expressed as a MULTIPLIER on top of the auto-fit
+  // scale. 1 = "fit the ship to the visible area"; the user zooms in/out from
+  // there with the wheel, arrow keys, or double-click (which resets to fit).
+  const [userZoom, setUserZoom] = useState(1);
+  const [fitZoom, setFitZoom] = useState(1);
   const svgRef = useRef<SVGSVGElement>(null);
-  const clampZoom = (z: number) => Math.min(3, Math.max(0.5, z));
+  const clampUser = (z: number) => Math.min(6, Math.max(0.4, z));
 
+  // Auto-fit: measure the visible gap between the side panels and scale the
+  // ship to fill it, so the whole vessel is always visible at the default
+  // zoom (also gives "auto-scale when ship type is changed"). Recomputes on
+  // resize and whenever the ship class (hull size) changes.
   useEffect(() => {
-    const svg = svgRef.current;
-    if (!svg) return;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      setZoom((z) => clampZoom(z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+    const compute = () => {
+      const svg = svgRef.current;
+      const stage = svg?.closest('.builder__stage');
+      if (!stage) return;
+      const stageRect = stage.getBoundingClientRect();
+      if (stageRect.width === 0) return;
+      const left = stage.querySelector('.builder__mid .builder__left');
+      const right = stage.querySelector('.builder__mid .builder__right');
+      let gap = stageRect.width;
+      if (left && right) {
+        const lr = left.getBoundingClientRect();
+        const rr = right.getBoundingClientRect();
+        gap = Math.max(140, rr.left - lr.right);
+      }
+      const pxPerUnit = Math.max(stageRect.width / VB_W, stageRect.height / VB_H);
+      const gapViewBox = gap / pxPerUnit;
+      const shipViewBox = geo.halfLen * 2 * 1.18; // margin for bowsprit/figurehead
+      setFitZoom(Math.min(2, Math.max(0.35, gapViewBox / shipViewBox)));
     };
-    const onDblClick = () => setZoom(1);
-    svg.addEventListener('wheel', onWheel, { passive: false });
-    svg.addEventListener('dblclick', onDblClick);
+    compute();
+    window.addEventListener('resize', compute);
+    return () => window.removeEventListener('resize', compute);
+  }, [geo.halfLen]);
+
+  // Wheel + double-click live on the STAGE (not the SVG) so the whole preview
+  // region responds, including over the floating side panels. The bottom
+  // carousel is excluded so it can still scroll.
+  useEffect(() => {
+    const stage = svgRef.current?.closest('.builder__stage');
+    if (!stage) return;
+    const onWheel = (e: WheelEvent) => {
+      const carousel = stage.querySelector('.builder__carousel');
+      if (carousel && e.target instanceof Node && carousel.contains(e.target)) return;
+      e.preventDefault();
+      setUserZoom((z) => clampUser(z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+    };
+    const onDblClick = () => setUserZoom(1);
+    stage.addEventListener('wheel', onWheel, { passive: false });
+    stage.addEventListener('dblclick', onDblClick);
     return () => {
-      svg.removeEventListener('wheel', onWheel);
-      svg.removeEventListener('dblclick', onDblClick);
+      stage.removeEventListener('wheel', onWheel);
+      stage.removeEventListener('dblclick', onDblClick);
     };
   }, []);
 
@@ -124,18 +165,19 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setZoom((z) => clampZoom(z + 0.1));
+        setUserZoom((z) => clampUser(z + 0.1));
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setZoom((z) => clampZoom(z - 0.1));
+        setUserZoom((z) => clampUser(z - 0.1));
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, fitZoom * userZoom));
   const zoomCenterY = WATER_Y - geo.freeboard * 0.5;
-  const userTransform = `translate(${cx} ${zoomCenterY}) scale(${zoom}) translate(${-cx} ${-zoomCenterY})`;
+  const userTransform = `translate(${cx} ${zoomCenterY}) scale(${scale}) translate(${-cx} ${-zoomCenterY})`;
   const focusTransform = focus
     ? `translate(${focus.x} ${focus.y}) scale(${focus.zoom}) translate(${-focus.x} ${-focus.y})`
     : undefined;
