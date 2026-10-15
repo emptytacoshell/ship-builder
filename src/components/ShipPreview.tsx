@@ -58,6 +58,14 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
   const mastXs =
     masts === 1 ? [cx] : Array.from({ length: masts }, (_, i) => startX + (mastSpan / (masts - 1)) * i);
 
+  // Fixed 15ft reference boat: sized proportionally to the current ship so it
+  // always represents the same real-world length, giving a "scale" to compare
+  // ship sizes against. Positioned in open water to the left of the ship.
+  const DINGHY_FT = 15;
+  const pixelsPerFt = (geo.halfLen * 2) / shipClass.lengthFt;
+  const dinghyLen = DINGHY_FT * pixelsPerFt;
+  const dinghyX = cx - geo.halfLen - 28 - dinghyLen / 2;
+
   return (
     <svg
       id="ship-preview-svg"
@@ -79,7 +87,9 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
         @keyframes rain-fall { from { transform: translateY(-60px); } to { transform: translateY(480px); } }
         @keyframes lightning { 0%, 92%, 100% { opacity: 0; } 93%, 95% { opacity: 0.5; } 94% { opacity: 0.15; } }
         @keyframes celestial-pulse { 0%, 100% { opacity: 0.75; } 50% { opacity: 0.95; } }
+        @keyframes dinghy-bob { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(3px) rotate(0.5deg); } }
         .ship-bob { animation: ship-bob 4.5s ease-in-out infinite; transform-origin: ${cx}px ${WATER_Y}px; }
+        .dinghy { animation: dinghy-bob 5.5s ease-in-out infinite; transform-origin: ${dinghyX}px ${WATER_Y + 4}px; }
         .wave-a { animation: wave-drift ${isStorm ? 3 : 7}s linear infinite; }
         .wave-b { animation: wave-drift-slow ${isStorm ? 4 : 9}s linear infinite; }
         .cloud { animation: cloud-drift ${isWindy ? 14 : 40}s linear infinite; }
@@ -164,6 +174,9 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
         <Figurehead figurehead={build.figurehead} x={bowX - 12} y={deckY + 16} scale={1.1} />
       </g>
 
+      {/* Fixed 15ft reference dinghy for scale comparison */}
+      <Dinghy x={dinghyX} length={dinghyLen} />
+
       {/* Rain for a storm */}
       {isStorm && (
         <g stroke="#9fb8c9" strokeWidth={1.5} opacity={0.6}>
@@ -191,6 +204,47 @@ function Cloud({ x, y, scale }: { x: number; y: number; scale: number }) {
       <ellipse cx={36} cy={6} rx={40} ry={22} />
       <ellipse cx={-34} cy={8} rx={34} ry={18} />
       <ellipse cx={12} cy={-12} rx={32} ry={18} />
+    </g>
+  );
+}
+
+/** A small, fixed-size rowboat used as a real-world scale reference (15ft). */
+function Dinghy({ x, length }: { x: number; length: number }) {
+  const half = length / 2;
+  // Sit the dinghy at the waterline (same level as the ship) so it stays in the
+  // visible open water above the bottom carousel, for a true size comparison.
+  const waterY = WATER_Y + 4;
+  const keelY = waterY + Math.max(6, length * 0.14);
+  const gunwale = waterY - Math.max(5, length * 0.09);
+  const color = '#5a4632';
+  const sternX = x - half;
+  const bowX = x + half;
+  const keelBulge = Math.max(4, length * 0.06);
+  const hullPath = `M ${sternX} ${waterY}
+    Q ${x} ${waterY + 3} ${bowX} ${waterY}
+    L ${bowX - half * 0.3} ${keelY}
+    Q ${x} ${keelY + keelBulge} ${sternX + half * 0.3} ${keelY}
+    Z`;
+  return (
+    <g className="dinghy">
+      {/* hull */}
+      <path d={hullPath} fill={color} stroke="#241408" strokeWidth={1.5} />
+      <path d={hullPath} fill="url(#hullShade)" />
+      {/* gunwale (top rail) */}
+      <path d={`M ${sternX} ${waterY} Q ${x} ${gunwale} ${bowX} ${waterY}`} fill="none" stroke="#241408" strokeWidth={1.5} />
+      {/* scale label */}
+      <line x1={x} y1={gunwale} x2={x} y2={gunwale - 12} stroke="#f2e2bd" strokeWidth={1} opacity={0.85} />
+      <text
+        x={x}
+        y={gunwale - 16}
+        textAnchor="middle"
+        fontSize={11}
+        fill="#f2e2bd"
+        opacity={0.9}
+        style={{ fontFamily: 'var(--font-display, sans-serif)' }}
+      >
+        15 ft
+      </text>
     </g>
   );
 }
