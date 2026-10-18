@@ -14,7 +14,7 @@ import {
 } from '../data/parts';
 
 function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
 const pirateNames = [

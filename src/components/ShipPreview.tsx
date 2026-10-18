@@ -152,7 +152,7 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
         ))}
 
         {/* Flag on the rearmost (leftmost) mast */}
-        <Flag flag={build.flag} originX={mastXs[0]} originY={mastTopY(0)} fly={1} />
+        <Flag flag={build.flag} originX={mastXs[0]!} originY={mastTopY(0)} fly={1} />
 
         {/* Hull */}
         <Hull build={build} geo={geo} />
