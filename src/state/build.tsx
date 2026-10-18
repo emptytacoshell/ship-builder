@@ -60,7 +60,7 @@ function clampToClass(build: BuildState): BuildState {
   };
 }
 
-function reducer(state: BuildState, action: BuildAction): BuildState {
+export function reducer(state: BuildState, action: BuildAction): BuildState {
   switch (action.type) {
     case 'setName':
       return { ...state, name: action.name };
