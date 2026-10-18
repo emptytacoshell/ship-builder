@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { combatScore, resolveRank, shipRanks } from './rank';
 
 describe('rank', () => {
