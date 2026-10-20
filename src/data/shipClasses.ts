@@ -30,6 +30,8 @@ export interface ShipClass {
   maxMasts: number;
   defaultMasts: number;
   maxCannons: number;
+  /** Approximate real-world length in feet (for scale reference). */
+  lengthFt: number;
   /** Visual hull shape for the preview. */
   hull: HullGeometry;
   /** Default build when a new ship of this class is started. */
@@ -41,6 +43,7 @@ export const shipClasses: ShipClass[] = [
     id: 'brig',
     label: 'Brig',
     blurb: 'Fast and nimble, two masts of square canvas.',
+    lengthFt: 70,
     base: { speed: 70, firepower: 35, durability: 50, cargo: 40 },
     maxMasts: 2,
     defaultMasts: 2,
@@ -59,6 +62,7 @@ export const shipClasses: ShipClass[] = [
     id: 'galleon',
     label: 'Galleon',
     blurb: 'A proud three-decker, built to carry treasure and war.',
+    lengthFt: 150,
     base: { speed: 40, firepower: 70, durability: 80, cargo: 90 },
     maxMasts: 3,
     defaultMasts: 3,
@@ -77,6 +81,7 @@ export const shipClasses: ShipClass[] = [
     id: 'frigate',
     label: 'Frigate',
     blurb: 'The all-rounder of the fleet: quick, sturdy, well-armed.',
+    lengthFt: 120,
     base: { speed: 60, firepower: 55, durability: 65, cargo: 60 },
     maxMasts: 3,
     defaultMasts: 3,
@@ -95,6 +100,7 @@ export const shipClasses: ShipClass[] = [
     id: 'corsair',
     label: 'Corsair',
     blurb: 'A fast privateer built to run guns and run away.',
+    lengthFt: 80,
     base: { speed: 80, firepower: 50, durability: 40, cargo: 45 },
     maxMasts: 2,
     defaultMasts: 2,
@@ -113,6 +119,7 @@ export const shipClasses: ShipClass[] = [
     id: 'longboat',
     label: 'Longboat',
     blurb: "Small, cheap, and quick. A crew's last resort.",
+    lengthFt: 30,
     base: { speed: 85, firepower: 15, durability: 30, cargo: 20 },
     maxMasts: 1,
     defaultMasts: 1,
@@ -131,6 +138,7 @@ export const shipClasses: ShipClass[] = [
     id: 'sloop',
     label: 'Sloop',
     blurb: 'A single-mast runner, light on the water and hard to catch.',
+    lengthFt: 50,
     base: { speed: 90, firepower: 25, durability: 35, cargo: 30 },
     maxMasts: 1,
     defaultMasts: 1,
@@ -149,6 +157,7 @@ export const shipClasses: ShipClass[] = [
     id: 'ship-of-the-line',
     label: 'Ship of the Line',
     blurb: 'A floating fortress of three gun decks, the backbone of any fleet.',
+    lengthFt: 180,
     base: { speed: 35, firepower: 85, durability: 90, cargo: 75 },
     maxMasts: 3,
     defaultMasts: 3,
@@ -166,8 +175,7 @@ export const shipClasses: ShipClass[] = [
   {
     id: 'schooner',
     label: 'Schooner',
-    blurb: 'Two-masted and swift, a smuggler\'s darling of the trade winds.',
-    base: { speed: 82, firepower: 40, durability: 45, cargo: 55 },
+    blurb: 'Two-masted and swift, a smuggler\'s darling of the trade winds.',    lengthFt: 90,    base: { speed: 82, firepower: 40, durability: 45, cargo: 55 },
     maxMasts: 2,
     defaultMasts: 2,
     maxCannons: 24,
@@ -185,6 +193,7 @@ export const shipClasses: ShipClass[] = [
     id: 'xebec',
     label: 'Xebec',
     blurb: 'A Mediterranean raider, broad-beamed and bristling with guns.',
+    lengthFt: 100,
     base: { speed: 72, firepower: 60, durability: 50, cargo: 35 },
     maxMasts: 2,
     defaultMasts: 2,
