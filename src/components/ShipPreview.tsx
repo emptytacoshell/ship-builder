@@ -51,6 +51,7 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
   const isNight = timeOfDay === 'night';
   const isStorm = weather === 'storm';
   const isWindy = weather === 'windy';
+  const waveDuration = isStorm ? 3.5 : 5;
 
   const shipClass = getShipClass(build.shipClassId);
   const masts = Math.min(build.rigging.mastCount, shipClass.maxMasts);
@@ -216,15 +217,23 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
           50%  { transform: translateY(5px) rotate(-0.6deg); }
           100% { transform: translateY(0px) rotate(0deg); }
         }
-        @keyframes wave-drift { from { transform: translateX(0); } to { transform: translateX(-80px); } }
-        @keyframes wave-drift-slow { from { transform: translateX(0); } to { transform: translateX(80px); } }
+        @keyframes wave-drift {
+          0% { transform: translateX(0); }
+          50% { transform: translateX(-80px); }
+          100% { transform: translateX(-160px); }
+        }
+        @keyframes wave-drift-slow {
+          0% { transform: translateX(0); }
+          50% { transform: translateX(80px); }
+          100% { transform: translateX(160px); }
+        }
         @keyframes cloud-drift { from { transform: translateX(-120px); } to { transform: translateX(900px); } }
         @keyframes rain-fall { from { transform: translateY(-60px); } to { transform: translateY(480px); } }
         @keyframes lightning { 0%, 92%, 100% { opacity: 0; } 93%, 95% { opacity: 0.5; } 94% { opacity: 0.15; } }
         @keyframes celestial-pulse { 0%, 100% { opacity: 0.75; } 50% { opacity: 0.95; } }
-        .ship-bob { animation: ship-bob 4.5s ease-in-out infinite; transform-origin: ${cx}px ${WATER_Y}px; }
-        .wave-a { animation: wave-drift ${isStorm ? 3 : 7}s linear infinite; }
-        .wave-b { animation: wave-drift-slow ${isStorm ? 4 : 9}s linear infinite; }
+        .ship-bob { animation: ship-bob ${waveDuration}s ease-in-out infinite; transform-origin: ${cx}px ${WATER_Y}px; }
+        .wave-a { animation: wave-drift ${waveDuration}s ease-in-out infinite; }
+        .wave-b { animation: wave-drift-slow ${isStorm ? 8 : 18}s ease-in-out infinite; }
         .cloud { animation: cloud-drift ${isWindy ? 14 : 40}s linear infinite; }
         .rain-drop { animation: rain-fall 0.7s linear infinite; }
         .lightning { animation: lightning 5s linear infinite; }
