@@ -87,7 +87,7 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
     } else if (prev.armament !== build.armament) {
       target = { x: cx, y: deckY + geo.freeboard * 0.45, zoom: 1.5 };
     } else if (prev.flag !== build.flag) {
-      target = { x: mastXs[0], y: mastTopY(0) + 14, zoom: 2 };
+      target = { x: mastXs[0]!, y: mastTopY(0) + 14, zoom: 2 };
     } else if (prev.figurehead !== build.figurehead) {
       target = { x: bowX - 12, y: deckY + 16, zoom: 2.2 };
     }
