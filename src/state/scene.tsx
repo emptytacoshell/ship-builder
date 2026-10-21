@@ -22,9 +22,17 @@ interface SceneContextValue {
 
 const SceneContext = createContext<SceneContextValue | null>(null);
 
-export function SceneProvider({ children }: { children: ReactNode }) {
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('day');
-  const [weather, setWeather] = useState<Weather>('clear');
+export function SceneProvider({
+  children,
+  initialTimeOfDay = 'day',
+  initialWeather = 'clear',
+}: {
+  children: ReactNode;
+  initialTimeOfDay?: TimeOfDay;
+  initialWeather?: Weather;
+}) {
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(initialTimeOfDay);
+  const [weather, setWeather] = useState<Weather>(initialWeather);
   const value = useMemo(
     () => ({ scene: { timeOfDay, weather }, setTimeOfDay, setWeather }),
     [timeOfDay, weather],
