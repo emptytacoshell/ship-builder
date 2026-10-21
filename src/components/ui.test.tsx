@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ColorSwatches, OptionGrid, Section, Stepper } from './ui';
 
 describe('ui primitives', () => {
@@ -8,9 +7,8 @@ describe('ui primitives', () => {
     expect(screen.getByRole('heading', { name: 'Hull' })).toBeInTheDocument();
   });
 
-  it('OptionGrid marks the active option and reports selection', async () => {
+  it('OptionGrid marks the active option and reports selection', () => {
     const onSelect = jest.fn();
-    const user = userEvent.setup();
     render(
       <OptionGrid
         options={[{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }]}
@@ -19,7 +17,7 @@ describe('ui primitives', () => {
       />,
     );
     expect(screen.getByText('B')).toHaveClass('option--active');
-    await user.click(screen.getByText('A'));
+    fireEvent.click(screen.getByText('A'));
     expect(onSelect).toHaveBeenCalledWith('a');
   });
 
