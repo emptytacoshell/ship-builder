@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { BuildProvider, useBuild } from './state/build';
-import { SceneProvider } from './state/scene';
+import { SceneProvider, useScene } from './state/scene';
 import { resolveInitialBuild } from './lib/serialize';
 import { ShipPreview } from './components/ShipPreview';
 import { SceneControls } from './components/SceneControls';
@@ -12,43 +13,88 @@ import { StatsPanel } from './components/StatsPanel';
 import { CrewRoster } from './components/CrewRoster';
 import { SaveShare } from './components/SaveShare';
 import { ShipManifest } from './components/ShipManifest';
+import { Icon, type IconName } from './components/Icon';
 import './App.css';
 
-function ShipPreviewWrap() {
+const PANEL_IDLE_TIMEOUT_MS = 10_000;
+
+function ShipPreviewWrap({ panelOpen }: { panelOpen: boolean }) {
   const { build } = useBuild();
-  return <ShipPreview build={build} background />;
+  return <ShipPreview build={build} background panelOpen={panelOpen} />;
 }
 
 function Builder() {
   const { build } = useBuild();
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const { scene } = useScene();
+  const [activePanel, setActivePanel] = useState<string | null>(null);
+  const [panelActivity, setPanelActivity] = useState(0);
 
   useEffect(() => {
-    const el = carouselRef.current;
-    if (!el) return;
-    const update = () => {
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      el.classList.toggle('carousel--no-left-fade', el.scrollLeft < 2);
-      el.classList.toggle('carousel--no-right-fade', el.scrollLeft > maxScroll - 2);
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActivePanel(null);
     };
-    el.addEventListener('scroll', update);
-    update();
-    return () => el.removeEventListener('scroll', update);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
   }, []);
+
+  useEffect(() => {
+    if (activePanel === null) return;
+
+    const timeout = window.setTimeout(() => setActivePanel(null), PANEL_IDLE_TIMEOUT_MS);
+    return () => window.clearTimeout(timeout);
+  }, [activePanel, panelActivity]);
+
+  const panels: {
+    id: string;
+    icon: IconName;
+    label: string;
+    content: ReactNode;
+  }[] = [
+    { id: 'class', icon: 'anchor', label: 'Ship class', content: <PartsPicker section="class" /> },
+    { id: 'hull', icon: 'hull', label: 'Hull', content: <PartsPicker section="hull" /> },
+    { id: 'rigging', icon: 'sails', label: 'Rigging', content: <PartsPicker section="rigging" /> },
+    { id: 'armament', icon: 'swords', label: 'Armament', content: <PartsPicker section="armament" /> },
+    { id: 'name', icon: 'edit', label: 'Ship name', content: <ShipNaming /> },
+    { id: 'flag', icon: 'flag', label: 'Flag', content: <FlagDesigner /> },
+    { id: 'figurehead', icon: 'figurehead', label: 'Figurehead', content: <FigureheadDesigner /> },
+    { id: 'crew', icon: 'crew', label: 'Crew', content: <CrewRoster /> },
+    { id: 'standing', icon: 'standing', label: "Ship's standing", content: <StatsPanel /> },
+    { id: 'manifest', icon: 'manifest', label: 'Ship manifest', content: <ShipManifest /> },
+  ];
+  const editablePanels = panels.filter((panel) => panel.id !== 'standing' && panel.id !== 'manifest');
+  const infoPanels = panels.filter((panel) => panel.id === 'standing' || panel.id === 'manifest');
+  const selectedPanel = panels.find((panel) => panel.id === activePanel);
+  const isInfoPanel = activePanel === 'standing' || activePanel === 'manifest';
+  const headerSkyClass = scene.timeOfDay === 'dawn' || scene.timeOfDay === 'day'
+    ? 'builder__header--bright-sky'
+    : 'builder__header--dark-sky';
+  const renderPanelButton = (panel: (typeof panels)[number]) => (
+    <button
+      key={panel.id}
+      type="button"
+      className={`builder__menu-item ${activePanel === panel.id ? 'builder__menu-item--active' : ''}`}
+      aria-label={panel.label}
+      aria-controls={activePanel === panel.id ? 'builder-panel' : undefined}
+      aria-expanded={activePanel === panel.id}
+      title={panel.label}
+      onClick={() => setActivePanel(activePanel === panel.id ? null : panel.id)}
+    >
+      <Icon name={panel.icon} />
+    </button>
+  );
 
   return (
     <div className="builder">
-      <header className="builder__header">
+      <header className={`builder__header ${headerSkyClass}`}>
         <div className="builder__brand">
-          <h1 className="builder__title">⚓ Pirate Ship Builder</h1>
-          <p className="builder__tagline">Chart a vessel, man her crew, and set sail.</p>
+          <h1 className="builder__title">Pirate Ship Builder</h1>
+          <div className="builder__shipname" aria-live="polite">{build.name}</div>
         </div>
-        <div className="builder__shipname">{build.name}</div>
       </header>
 
       <div className="builder__stage">
-        <div className="builder__stage-bg" aria-hidden="true">
-          <ShipPreviewWrap />
+        <div className={`builder__stage-bg ${scene.weather === 'storm' ? 'builder__stage-bg--storm' : ''}`} aria-hidden="true">
+          <ShipPreviewWrap panelOpen={activePanel !== null} />
         </div>
 
         {/* Bare floating buttons on top of the rendering. */}
@@ -57,24 +103,27 @@ function Builder() {
           <SaveShare />
         </div>
 
-        {/* Middle row: Standing (left) and Manifest (right) fill the gap
-            between the top bar and the carousel with equal margins. */}
-        <div className="builder__mid">
-          <div className="builder__left">
-            <StatsPanel />
-          </div>
-          <div className="builder__right">
-            <ShipManifest />
-          </div>
-        </div>
+        <div className={`builder__workspace ${isInfoPanel ? 'builder__workspace--info' : ''}`}>
+          <nav className="builder__menu" aria-label="Ship builder panels">
+            {editablePanels.map(renderPanelButton)}
+            <div className="builder__info-menu" role="group" aria-label="Ship information panels">
+              {infoPanels.map(renderPanelButton)}
+            </div>
+          </nav>
 
-        {/* Frosted-glass panel carousel along the bottom. */}
-        <div className="builder__carousel" ref={carouselRef}>
-          <PartsPicker />
-          <ShipNaming />
-          <FlagDesigner />
-          <FigureheadDesigner />
-          <CrewRoster />
+          {selectedPanel && (
+            <section
+              className="builder__panel"
+              id="builder-panel"
+              aria-label={`${selectedPanel.label} panel`}
+              onPointerDown={() => setPanelActivity((activity) => activity + 1)}
+              onKeyDown={() => setPanelActivity((activity) => activity + 1)}
+            >
+              <div className="builder__panel-content">{selectedPanel.content}</div>
+            </section>
+          )}
+
+          <div className="builder__scene-space" aria-hidden="true" />
         </div>
       </div>
     </div>
