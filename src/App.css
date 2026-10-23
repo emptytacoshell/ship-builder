@@ -1,58 +1,78 @@
-/* Layout: a flex column that fills the viewport exactly — no page scroll.
-   The title sits in normal flow above the stage; the stage takes the rest.
-   Padding gives the rounded stage some breathing room from the edges. */
+/* Full-bleed ship scene with floating builder controls. */
+:root {
+  --corner-radius: 10px;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .builder {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   margin: 0;
-  padding: 14px 18px 18px;
+  padding: 0;
 }
 
-/* Title lives outside the stage, on the parchment, in normal flow.
-   The brand sits on the left; the live ship name on the right. */
 .builder__header {
-  flex: 0 0 auto;
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  left: 50%;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 16px 8px;
+  justify-content: center;
+  pointer-events: none;
 }
 
 .builder__brand {
   min-width: 0;
+  text-align: center;
+  line-height: 1.15;
 }
 
 .builder__title {
-  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  font-size: clamp(1.25rem, 2.4vw, 1.6rem);
   color: var(--wood-dark);
   text-shadow: 2px 2px 0 var(--gold);
 }
 
-.builder__tagline {
-  color: var(--ink-soft);
-  font-style: italic;
-  margin-top: 2px;
+.builder__header--bright-sky .builder__title {
+  text-shadow: 2px 2px 0 rgba(43, 29, 16, 0.72);
+}
+
+.builder__header--dark-sky .builder__title {
+  color: var(--parchment);
+  text-shadow: 2px 2px 0 var(--gold-bright), 0 0 6px rgba(243, 230, 200, 0.85);
 }
 
 .builder__shipname {
-  margin-left: auto;
+  margin-top: 0;
+  width: 100%;
+  min-width: 0;
   font-family: var(--font-display);
-  font-size: clamp(1rem, 2vw, 1.5rem);
-  font-weight: 700;
+  font-size: clamp(1rem, 1.9vw, 1.25rem);
+  font-weight: 400;
   color: var(--wood-dark);
-  letter-spacing: 1px;
+  letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 40%;
-  text-align: right;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(243, 230, 200, 0.9);
 }
 
-/* Stage: fills all remaining vertical space as a non-cropped background
-   canvas, framed by a rounded wooden rectangle. Bare buttons float on top;
-   a frosted-glass carousel of equal-height panels runs along the bottom. */
+.builder__header--bright-sky .builder__shipname {
+  text-shadow: 0 1px 3px rgba(43, 29, 16, 0.72);
+}
+
+.builder__header--dark-sky .builder__shipname {
+  color: var(--parchment);
+  text-shadow: 0 1px 3px rgba(243, 230, 200, 0.95), 0 0 6px rgba(243, 230, 200, 0.75);
+}
+
 .builder__stage {
   position: relative;
   flex: 1 1 auto;
@@ -60,9 +80,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border: 4px solid var(--wood-dark);
-  border-radius: 16px;
-  /* Sky-to-sea gradient so the letterboxed edges blend into the scene. */
+  border: 0;
+  border-radius: 0;
   background: linear-gradient(180deg, #f2e2bd 0%, #d9b98a 55%, #1f5a6b 78%, #0f2f3a 100%);
 }
 
@@ -70,25 +89,35 @@
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
 }
 
-/* The ship is NOT cropped: it fits the whole canvas (letterboxed). */
+.builder__stage-bg--storm::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: rgba(10, 21, 32, 0.25);
+  content: "";
+  pointer-events: none;
+}
+
+/* Fit the complete ship scene while keeping its background full bleed. */
 .builder__stage-bg .ship-preview--bg {
   width: 100%;
   height: 100%;
   display: block;
 }
 
-/* Bare floating buttons along the top of the rendering. */
+/* Bare floating buttons along the top of the scene. */
 .builder__topbar {
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  justify-content: center;
+  align-items: center;
   gap: 14px;
-  padding: 14px 16px;
+  padding: 96px 16px 14px;
   pointer-events: none;
 }
 
@@ -96,10 +125,19 @@
   pointer-events: auto;
 }
 
-/* Chart the Course: bare buttons in a frosted pill on the top-right,
-   matching the scene-controls pill on the left. */
+.builder__topbar .scene-controls {
+  margin-inline: auto;
+}
+
+/* Chart the Course: buttons in a frosted pill on the top-right. */
 .builder__topbar .save-share {
+  position: fixed;
+  z-index: 5;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
+  height: 62px;
   align-items: center;
   gap: 6px;
   padding: 6px 8px;
@@ -107,156 +145,285 @@
   backdrop-filter: blur(6px) saturate(1.1);
   -webkit-backdrop-filter: blur(6px) saturate(1.1);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 999px;
+  border-radius: var(--corner-radius);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 .builder__topbar .save-share__msg {
   position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
+  bottom: calc(100% + 12px);
+  left: 50%;
   white-space: nowrap;
   background: rgba(42, 26, 14, 0.85);
   color: var(--parchment);
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--corner-radius);
   font-size: 0.7rem;
+  transform: translateX(-50%);
 }
 
-/* Middle row: the Standing (left) and Manifest (right) panels fill the gap
-   between the top bar and the carousel with equal top/bottom margins. Being
-   in normal flow, they always clear the top bar even when it wraps. */
-.builder__mid {
+.builder__workspace {
   position: relative;
-  z-index: 3;
+  z-index: 2;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  justify-content: space-between;
-  align-items: stretch;
-  padding: 16px 16px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0 16px 72px;
+  pointer-events: none;
 }
 
-/* Ship's Standing: left column of the middle row. */
-.builder__left {
-  width: 300px;
-  min-height: 0;
-}
-
-.builder__left .section {
-  background: rgba(243, 230, 200, 0.42);
-  backdrop-filter: blur(12px) saturate(1.2);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
-  border: 1.5px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-  height: 100%;
-}
-
-/* Ship's Manifest: right column of the middle row, mirrors Standing. */
-.builder__right {
-  width: 300px;
-  min-height: 0;
-}
-
-.builder__right .section {
-  background: rgba(243, 230, 200, 0.42);
-  backdrop-filter: blur(12px) saturate(1.2);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
-  border: 1.5px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-  height: 100%;
-}
-
-/* The panel carousel: horizontal scroll, all panels the same height.
-   Starts at the left edge — the Ship's Standing overlay floats in the gap
-   above it, so no left clearance is needed. */
-.builder__carousel {
+.builder__menu {
   position: relative;
   z-index: 1;
-  flex: 0 0 auto;
+  flex: 0 0 48px;
   display: flex;
-  gap: 14px;
-  align-items: stretch;
-  overflow-x: auto;
-  overflow-y: hidden;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-height: 100%;
+  overflow-y: auto;
   scrollbar-width: thin;
-  margin: 0 16px 16px;
-  padding-bottom: 4px;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
-}
-.builder__carousel.carousel--no-left-fade {
-  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
-  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
-}
-.builder__carousel.carousel--no-right-fade {
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 100%);
-}
-.builder__carousel.carousel--no-left-fade.carousel--no-right-fade {
-  -webkit-mask-image: none;
-  mask-image: none;
+  pointer-events: auto;
+  order: 0;
 }
 
-/* Every carousel panel shares one fixed height so they line up.
-   No inner scroll — content is sized to fit. */
-.builder__carousel > .section {
-  flex: 0 0 300px;
-  width: 300px;
-  height: 244px;
-  overflow: hidden;
+.icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
 }
 
-/* Jolly Roger panel — keep compact so it fits the 300px cap. */
-.builder__carousel .section {
-  gap: 6px;
+.builder__info-menu {
+  position: fixed;
+  z-index: 2;
+  top: 50%;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transform: translateY(-50%);
+  pointer-events: auto;
 }
-.builder__carousel .option-grid {
-  gap: 4px;
+
+.builder__menu-item {
+  width: 48px;
+  height: 62px;
+  flex: 0 0 62px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid rgba(91, 58, 34, 0.5);
+  border-radius: var(--corner-radius);
+  background: rgba(243, 230, 200, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--wood-dark);
+  transition: transform 0.32s var(--motion-ease), background 0.24s var(--motion-ease), color 0.24s var(--motion-ease);
 }
-.builder__carousel .option {
-  padding: 6px 10px;
+
+.builder__menu-item .icon {
+  width: 26px;
+  height: 26px;
+}
+
+.builder__menu-item:hover {
+  transform: translateY(-1px);
+  background: var(--wood-dark);
+  border-color: var(--wood-dark);
+  color: var(--parchment);
+}
+
+.builder__menu-item--active {
+  background: var(--wood);
+  border-color: var(--wood-dark);
+  color: var(--parchment);
+}
+
+.builder__menu-item--active:hover {
+  background: var(--wood-dark);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+
+.builder__menu-item:focus-visible {
+ outline: 3px solid var(--gold-bright);
+ outline-offset: 2px;
+}
+
+.builder__panel {
+  position: relative;
+  flex: 0 1 430px;
+  width: min(430px, calc(100vw - 120px));
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  height: min(68vh, 680px);
+  max-height: calc(100% - 24px);
+  align-self: flex-start;
+  pointer-events: auto;
+  order: 1;
+  animation: panel-arrive 0.48s var(--motion-ease) both;
+}
+
+@keyframes panel-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.builder__scene-space {
+  order: 2;
+}
+
+.builder__panel-content {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  pointer-events: auto;
+}
+
+.builder__panel-content > .section {
+  max-height: 100%;
+  overflow-y: auto;
+  background: rgba(243, 230, 200, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(91, 58, 34, 0.75);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+}
+
+.builder__panel-content > .section {
+  gap: 14px;
+  padding: 18px;
+}
+
+.builder__panel-content .section button {
+  border-radius: 6px;
+  min-height: 40px;
+}
+
+.builder__panel-content > .section > .section-title {
+  margin: 0;
+  padding: 0 0 8px;
+}
+
+.builder__panel-content > .section > :not(.section-title) {
+  margin-block: 0;
+}
+
+.builder__scene-space {
+  flex: 1 1 auto;
+  min-width: 0;
+  order: 2;
+}
+
+.builder__workspace--info .builder__scene-space {
+  order: 1;
+}
+
+.builder__workspace--info .builder__panel {
+  align-self: flex-start;
+  flex: 0 1 500px;
+  width: min(500px, calc(100vw - 120px));
+  height: min(68vh, 640px);
+  max-height: calc(100% - 24px);
+  order: 2;
+  margin: 0 60px 0 auto;
+}
+
+.builder__workspace--info .builder__panel-content,
+.builder__workspace--info .builder__panel-content > .section {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.builder__panel-content .section {
+  gap: 14px;
+}
+
+.builder__panel-content .section-title {
+  font-size: 1.2rem;
+}
+
+.builder__panel-content .manifest__keys,
+.builder__panel-content .rank__score {
   font-size: 0.8rem;
+}
+
+.builder__panel-content .stat__head,
+.builder__panel-content .rank__blurb {
+  font-size: 0.9rem;
+}
+
+.builder__panel-content .sub-label {
+  font-size: 0.9rem;
+}
+
+.builder__panel-content .stepper__label,
+.builder__panel-content .stepper__value,
+.builder__panel-content .text-input,
+.builder__panel-content .select-input,
+.builder__panel-content .btn,
+.builder__panel-content .crew__empty {
+  font-size: 0.9rem;
+}
+
+.builder__panel-content .manifest {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.builder__panel-content .option-grid {
+  gap: 8px;
+}
+
+.builder__panel-content .option {
+  padding: 7px 11px;
+  font-size: 0.9rem;
   white-space: nowrap;
 }
-.builder__carousel .swatches {
-  gap: 6px;
+
+.builder__panel-content .swatches {
+  gap: 8px;
 }
-.builder__carousel .flag-preview {
-  padding: 2px;
+
+.builder__panel-content .flag-preview {
+  padding: 6px;
   margin-bottom: 0;
 }
-.builder__carousel .flag-preview svg {
+
+.builder__panel-content .flag-preview svg {
   max-width: 150px;
 }
 
-/* Frosted-glass look for the floating panels — a touch more opaque than the
-   manifest so the dark water behind doesn't read as see-through. */
-.builder__carousel .section {
-  background: rgba(243, 230, 200, 0.62);
-  backdrop-filter: blur(12px) saturate(1.2);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
-  border: 1.5px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-/* Tiny swatches inside the carousel so Jolly Roger fits the panel height. */
-.builder__carousel .swatch {
-  width: 18px;
-  height: 18px;
+.builder__panel-content .swatch {
+  width: 40px;
+  height: 40px;
 }
 
 /* Section card */
 .section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   background: var(--parchment);
   border: 2px solid var(--wood);
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: var(--corner-radius);
+  padding: 16px;
   box-shadow: 4px 4px 0 var(--shadow);
 }
 
@@ -269,7 +436,6 @@
 
 .sub-label {
   font-size: 0.7rem;
-  text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--ink-soft);
 }
@@ -278,7 +444,7 @@
 .preview-card {
   background: var(--parchment);
   border: 3px solid var(--wood);
-  border-radius: 12px;
+  border-radius: var(--corner-radius);
   padding: 10px;
   box-shadow: 6px 6px 0 var(--shadow);
 }
@@ -287,7 +453,7 @@
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 6px;
+  border-radius: 0;
   background: linear-gradient(160deg, #f2e2bd, #d9b98a);
 }
 
@@ -295,7 +461,7 @@
   font-family: var(--font-display);
   fill: var(--wood-dark);
   font-size: 0.8rem;
-  letter-spacing: 2px;
+  letter-spacing: 0.5px;
 }
 
 /* Option grid */
@@ -308,11 +474,11 @@
 .option {
   padding: 5px 9px;
   border: 2px solid var(--wood);
-  border-radius: 6px;
+  border-radius: var(--corner-radius);
   background: var(--parchment);
   color: var(--ink);
   font-size: 0.8rem;
-  transition: transform 0.08s, background 0.15s, color 0.15s;
+  transition: transform 0.32s var(--motion-ease), background 0.24s var(--motion-ease), color 0.24s var(--motion-ease);
 }
 
 .option:hover {
@@ -335,9 +501,9 @@
 .swatch {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: var(--corner-radius);
   border: 2px solid rgba(0, 0, 0, 0.2);
-  transition: transform 0.08s;
+  transition: transform 0.32s var(--motion-ease);
 }
 
 .swatch:hover {
@@ -364,13 +530,19 @@
 }
 
 .stepper__btn {
-  width: 31px;
-  height: 31px;
-  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  border-radius: var(--corner-radius);
   border: 2px solid var(--wood);
   background: var(--parchment);
-  font-size: 0.8rem;
-  line-height: 1;
+}
+
+.stepper__btn .icon {
+  width: 16px;
+  height: 16px;
 }
 
 .stepper__btn:disabled {
@@ -390,7 +562,7 @@
   width: 100%;
   padding: 6px 8px;
   border: 2px solid var(--wood);
-  border-radius: 6px;
+  border-radius: var(--corner-radius);
   background: var(--parchment);
   color: var(--ink);
   font-size: 0.8rem;
@@ -402,11 +574,16 @@
   outline-offset: 1px;
 }
 
+.ship-name-input {
+  height: 40px;
+  box-sizing: border-box;
+}
+
 .select-input {
   width: 100%;
   padding: 6px 8px;
   border: 2px solid var(--wood);
-  border-radius: 6px;
+  border-radius: var(--corner-radius);
   background: var(--parchment);
   color: var(--ink);
   font-size: 0.8rem;
@@ -436,7 +613,7 @@
   height: 11px;
   margin-top: 3px;
   border: 2px solid var(--wood);
-  border-radius: 6px;
+  border-radius: var(--corner-radius);
   background: rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
@@ -444,13 +621,13 @@
 .stat__fill {
   height: 100%;
   background: linear-gradient(90deg, var(--wood), var(--gold));
-  transition: width 0.3s ease;
+  transition: width 0.38s var(--motion-ease);
 }
 
 /* Flag & figurehead preview */
 .flag-preview {
   background: rgba(0, 0, 0, 0.06);
-  border-radius: 8px;
+  border-radius: var(--corner-radius);
   padding: 6px;
   margin-bottom: 8px;
   display: flex;
@@ -470,13 +647,7 @@
   margin-bottom: 8px;
 }
 
-/* The crew list scrolls inside the fixed-height carousel panel once it
-   overflows, so recruiting more souls never pushes the panel open. */
-.builder__carousel .crew {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
+.builder__panel-content .crew {
   padding-right: 2px;
 }
 
@@ -488,7 +659,7 @@
 
 .crew__member {
   display: grid;
-  grid-template-columns: 1fr 1fr 48px 32px;
+  grid-template-columns: minmax(0, 1fr) minmax(136px, 1.35fr) 52px 40px;
   gap: 6px;
   align-items: center;
 }
@@ -497,19 +668,90 @@
 .crew__skill,
 .crew__member .select-input {
   margin-bottom: 0;
-  height: 32px;
+  height: 40px;
   box-sizing: border-box;
+}
+
+.crew-role-select {
+  position: relative;
+  min-width: 0;
+}
+
+.crew-role-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 2px solid var(--wood);
+  border-radius: var(--corner-radius);
+  background: var(--parchment);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.crew-role-select__trigger:hover,
+.crew-role-select__option:hover {
+  background-color: var(--parchment-dark);
+}
+
+.crew-role-select__arrow {
+  width: 14px;
+  height: 14px;
+}
+
+.crew-role-select__options {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  left: 0;
+  width: max(100%, 140px);
+  max-height: 192px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 2px solid var(--wood);
+  border-radius: var(--corner-radius);
+  background: var(--parchment);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.crew-role-select__option {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: calc(var(--corner-radius) - 3px);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.crew-role-select__option--active {
+  background: var(--wood);
+  color: var(--parchment);
 }
 
 /* Buttons */
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 9px 14px;
   border: 2px solid var(--wood-dark);
-  border-radius: 6px;
+  border-radius: var(--corner-radius);
   background: var(--wood);
   color: var(--parchment);
   font-size: 0.8rem;
-  transition: transform 0.08s, background 0.15s;
+  transition: transform 0.32s var(--motion-ease), background 0.24s var(--motion-ease);
 }
 
 .btn:hover {
@@ -528,11 +770,18 @@
 
 .crew__member .btn--danger {
   padding: 0;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   box-sizing: border-box;
-  font-size: 0.9rem;
-  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+
+.crew__member .btn--danger .icon {
+  width: 16px;
+  height: 16px;
 }
 
 /* Save share */
@@ -549,12 +798,24 @@
   font-size: 0.7rem;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Manifest */
 .manifest {
   background: var(--wood-dark);
   color: var(--parchment);
   padding: 10px;
-  border-radius: 6px;
+  border-radius: var(--corner-radius);
   font-size: 0.7rem;
   line-height: 1.4;
   white-space: pre-wrap;
@@ -575,7 +836,7 @@
 .rank {
   background: linear-gradient(135deg, var(--wood-dark), #2a1a0e);
   border: 2px solid var(--gold);
-  border-radius: 8px;
+  border-radius: var(--corner-radius);
   padding: 10px 12px;
   margin-bottom: 10px;
 }
@@ -608,27 +869,39 @@
   line-height: 1.3;
 }
 
-/* Scene controls: a single frosted pill with time + weather in one line. */
+/* Keep time and weather in separate frosted controls. */
 .scene-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 12px;
+}
+
+.scene-controls__group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 62px;
+  padding: 10px;
   background: rgba(243, 230, 200, 0.4);
   backdrop-filter: blur(6px) saturate(1.1);
   -webkit-backdrop-filter: blur(6px) saturate(1.1);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 999px;
+  border-radius: var(--corner-radius);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 .scene-controls__label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  flex: 0 0 auto;
   color: var(--ink-soft);
-  margin-left: 12px;
-  margin-right: 2px;
+}
+
+.scene-controls__label .icon {
+  width: 26px;
+  height: 26px;
 }
 
 .scene-controls__divider {
@@ -639,16 +912,23 @@
 }
 
 .scene-btn {
-  padding: 5px 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
   width: 90px;
   text-align: center;
   border: 1px solid rgba(42, 26, 14, 0.4);
-  border-radius: 999px;
+  border-radius: var(--corner-radius);
   background: rgba(255, 255, 255, 0.55);
   color: var(--ink);
   font-size: 0.8rem;
   white-space: nowrap;
-  transition: transform 0.08s, background 0.15s;
+  transition: transform 0.32s var(--motion-ease), background 0.24s var(--motion-ease);
+}
+
+.scene-controls__group .scene-btn {
+  border-radius: 6px;
 }
 
 .scene-btn:hover {
@@ -682,4 +962,267 @@
 
 .btn--gold:hover {
   background: var(--gold-bright);
+}
+
+@media (min-width: 701px) {
+  :root {
+    font-size: 18px;
+  }
+
+  .builder__menu {
+    flex-basis: 54px;
+  }
+
+  .builder__menu-item {
+    width: 54px;
+    height: 62px;
+    flex-basis: 62px;
+  }
+
+  .builder__info-menu {
+    gap: 10px;
+  }
+
+  .option {
+    padding: 7px 11px;
+  }
+
+  .stepper__btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .swatch {
+    width: 40px;
+    height: 40px;
+  }
+
+  .btn {
+    min-height: 40px;
+    padding: 9px 16px;
+  }
+
+  .scene-btn {
+    min-height: 40px;
+    width: 96px;
+    padding: 8px;
+  }
+
+  .builder__topbar .save-share .scene-btn {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+@media (max-width: 700px) {
+  .builder {
+    padding: 0;
+  }
+
+  .builder__header {
+    top: 18px;
+    left: 50%;
+    width: calc(100% - 16px);
+    max-width: none;
+    transform: translateX(-50%);
+    justify-content: center;
+  }
+
+  .builder__title {
+    font-size: clamp(1.1rem, 4.2vw, 1.35rem);
+  }
+
+  .builder__shipname {
+    font-size: clamp(1rem, 3.8vw, 1.2rem);
+  }
+
+  .builder__topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 72px 8px 8px;
+  }
+
+  .builder__topbar .scene-controls {
+    position: static;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+    gap: 12px;
+    padding: 0;
+  }
+
+  .scene-controls__group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 56px;
+    gap: 6px;
+  }
+
+  .builder__topbar .scene-controls__divider {
+    display: none;
+  }
+
+  .builder__topbar .scene-btn {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+  }
+
+  .builder__topbar .save-share {
+    position: fixed;
+    z-index: 5;
+    top: auto;
+    right: auto;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    align-self: stretch;
+    width: calc(100% - 16px);
+    height: 56px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: stretch;
+    gap: 6px;
+    padding: 6px;
+    border-radius: var(--corner-radius);
+  }
+
+  .builder__topbar .save-share .scene-btn {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    padding-inline: 2px;
+    height: 42px;
+    font-size: 1.1rem;
+  }
+
+  .builder__workspace {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 0 8px 124px;
+  }
+
+  .builder__menu {
+    position: absolute;
+    z-index: 3;
+    top: 8px;
+    right: 8px;
+    bottom: auto;
+    left: 8px;
+    flex: 0 0 48px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 8px;
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+    max-height: none;
+    padding-right: 24px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 22px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 22px), transparent 100%);
+    order: 2;
+  }
+
+  .builder__info-menu {
+    position: static;
+    flex-direction: row;
+    flex: 0 0 auto;
+    transform: none;
+  }
+
+  .builder__scene-space {
+    flex: 1 1 auto;
+    min-height: 0;
+    order: 0;
+  }
+
+  .builder__menu-item {
+    width: 44px;
+    height: 56px;
+    flex: 0 0 56px;
+  }
+
+  .builder__panel {
+    position: absolute;
+    z-index: 2;
+    top: 72px;
+    right: 8px;
+    bottom: auto;
+    left: 8px;
+    flex: 0 1 auto;
+    width: auto;
+    max-width: none;
+    height: auto;
+    max-height: max(180px, min(54dvh, calc(100dvh - 390px)));
+    align-self: stretch;
+  }
+
+  .crew__member {
+    grid-template-columns: minmax(0, 1fr) minmax(108px, 1.2fr) 44px 40px;
+  }
+
+  .builder__workspace--info .builder__panel {
+    flex: 0 1 auto;
+    width: auto;
+    height: auto;
+    max-height: max(180px, min(54dvh, calc(100dvh - 390px)));
+    margin: 0;
+  }
+
+  .builder__workspace--info .builder__panel-content,
+  .builder__workspace--info .builder__panel-content > .section {
+    flex: 0 1 auto;
+    min-height: 0;
+  }
+
+  .builder__topbar .save-share__msg {
+    top: auto;
+    bottom: calc(100% + 24px);
+    max-width: calc(100vw - 24px);
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+}
+
+@media (max-width: 380px) {
+  .builder__topbar .scene-controls {
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .builder__topbar .scene-btn {
+    font-size: 0.72rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .builder__panel {
+    animation: none;
+  }
+
+  .builder__menu-item,
+  .option,
+  .swatch,
+  .btn,
+  .scene-btn {
+    transition: none;
+  }
+
+  .builder__menu {
+    scroll-behavior: auto;
+  }
 }

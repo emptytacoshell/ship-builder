@@ -1,4 +1,5 @@
 import { useScene, type TimeOfDay, type Weather } from '../state/scene';
+import { Icon } from './Icon';
 
 const timeOptions: { id: TimeOfDay; label: string }[] = [
   { id: 'dawn', label: 'Dawn' },
@@ -18,29 +19,32 @@ export function SceneControls() {
 
   return (
     <div className="scene-controls" role="group" aria-label="The Sea Around You">
-      <span className="scene-controls__label">Time</span>
-      {timeOptions.map((opt) => (
-        <button
-          key={opt.id}
-          type="button"
-          className={`scene-btn ${scene.timeOfDay === opt.id ? 'scene-btn--active' : ''}`}
-          onClick={() => setTimeOfDay(opt.id)}
-        >
-          {opt.label}
-        </button>
-      ))}
-      <span className="scene-controls__divider" aria-hidden="true" />
-      <span className="scene-controls__label">Weather</span>
-      {weatherOptions.map((opt) => (
-        <button
-          key={opt.id}
-          type="button"
-          className={`scene-btn ${scene.weather === opt.id ? 'scene-btn--active' : ''}`}
-          onClick={() => setWeather(opt.id)}
-        >
-          {opt.label}
-        </button>
-      ))}
+      <div className="scene-controls__group" role="group" aria-label="Time of day">
+        <span className="scene-controls__label"><Icon name="time" /></span>
+        {timeOptions.map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            className={`scene-btn ${scene.timeOfDay === opt.id ? 'scene-btn--active' : ''}`}
+            onClick={() => setTimeOfDay(opt.id)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+      <div className="scene-controls__group" role="group" aria-label="Weather">
+        <span className="scene-controls__label"><Icon name="weather" /></span>
+        {weatherOptions.map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            className={`scene-btn ${scene.weather === opt.id ? 'scene-btn--active' : ''}`}
+            onClick={() => setWeather(opt.id)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

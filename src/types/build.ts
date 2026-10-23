@@ -11,7 +11,7 @@ export type ShipClassId =
   | 'schooner'
   | 'xebec';
 
-export type WoodId = 'oak' | 'walnut' | 'ironwood' | 'driftwood' | 'teak' | 'ebony';
+export type WoodId = 'oak' | 'walnut' | 'ironwood' | 'driftwood' | 'teak' | 'ebony' | 'mahogany' | 'cedar' | 'pine';
 export type SailStyleId = 'square' | 'lateen' | 'gaff' | 'scratched';
 export type CannonTierId = 'none' | 'swivel' | 'long' | 'demi' | 'culverin' | 'mortar' | 'blunderbuss' | 'naval';
 export type EmblemId = 'skull' | 'anchor' | 'serpent' | 'compass' | 'crown' | 'eagle' | 'hourglass';
