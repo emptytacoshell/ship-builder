@@ -9,6 +9,8 @@ const VB_H = 460;
 const WATER_Y = 360;
 // Shift the whole scene upward so the hull clears the bottom carousel.
 const SCENE_SHIFT = 110;
+// Opacity of the front water layer when it is semi-transparent (seethrough on).
+const FRONT_WATER_OPACITY = 0.45;
 
 interface Palette {
   skyTop: string;
@@ -35,7 +37,7 @@ const STARS: ReadonlyArray<readonly [number, number]> = [
 
 export function ShipPreview({ build, background = false }: { build: BuildState; background?: boolean }) {
   const { scene } = useScene();
-  const { timeOfDay, weather } = scene;
+  const { timeOfDay, weather, waterTransparent } = scene;
   const palette = PALETTES[timeOfDay];
 
   const isNight = timeOfDay === 'night';
@@ -130,18 +132,10 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
         </g>
       )}
 
-      {/* Sea */}
+      {/* Sea (background layer, behind the ship) */}
       <rect x={0} y={WATER_Y} width={VB_W} height={VB_H - WATER_Y + SCENE_SHIFT} fill="url(#sea)" />
 
-      {/* Animated waves */}
-      <g className="wave-a" stroke={palette.wave} strokeWidth={2} fill="none" opacity={isStorm ? 0.7 : 0.5}>
-        <path d={`M -80 ${WATER_Y + 20} q 40 -10 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
-      </g>
-      <g className="wave-b" stroke={palette.wave} strokeWidth={2} fill="none" opacity={isStorm ? 0.55 : 0.35}>
-        <path d={`M -80 ${WATER_Y + 42} q 40 -8 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
-      </g>
-
-      {/* The ship, gently bobbing on the water */}
+      {/* The ship, gently bobbing, hull submerged below the waterline */}
       <g className="ship-bob">
         {/* Sails + masts */}
         {mastXs.map((mx, i) => (
@@ -162,6 +156,25 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
 
         {/* Figurehead at the bow (front of the hull) */}
         <Figurehead figurehead={build.figurehead} x={bowX - 12} y={deckY + 16} scale={1.1} />
+      </g>
+
+      {/* Front water layer over the submerged hull; semi-transparent when seethrough is on */}
+      <rect
+        id="front-water"
+        x={0}
+        y={WATER_Y}
+        width={VB_W}
+        height={VB_H - WATER_Y + SCENE_SHIFT}
+        fill="url(#sea)"
+        opacity={waterTransparent ? FRONT_WATER_OPACITY : 1}
+      />
+
+      {/* Animated waves on the water surface, in front of the ship */}
+      <g className="wave-a" stroke={palette.wave} strokeWidth={2} fill="none" opacity={isStorm ? 0.7 : 0.5}>
+        <path d={`M -80 ${WATER_Y + 20} q 40 -10 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
+      </g>
+      <g className="wave-b" stroke={palette.wave} strokeWidth={2} fill="none" opacity={isStorm ? 0.55 : 0.35}>
+        <path d={`M -80 ${WATER_Y + 42} q 40 -8 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
       </g>
 
       {/* Rain for a storm */}

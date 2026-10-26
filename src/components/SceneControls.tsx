@@ -14,7 +14,7 @@ const weatherOptions: { id: Weather; label: string }[] = [
 ];
 
 export function SceneControls() {
-  const { scene, setTimeOfDay, setWeather } = useScene();
+  const { scene, setTimeOfDay, setWeather, setWaterTransparent } = useScene();
 
   return (
     <div className="scene-controls" role="group" aria-label="The Sea Around You">
@@ -41,6 +41,16 @@ export function SceneControls() {
           {opt.label}
         </button>
       ))}
+      <span className="scene-controls__divider" aria-hidden="true" />
+      <span className="scene-controls__label">Water</span>
+      <button
+        type="button"
+        className={`scene-btn ${scene.waterTransparent ? 'scene-btn--active' : ''}`}
+        aria-pressed={scene.waterTransparent}
+        onClick={() => setWaterTransparent(!scene.waterTransparent)}
+      >
+        {scene.waterTransparent ? 'Seethrough' : 'Opaque'}
+      </button>
     </div>
   );
 }
