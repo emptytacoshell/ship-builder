@@ -25,6 +25,9 @@ export const woods: WoodOption[] = [
   { id: 'driftwood', label: 'Driftwood', modifier: { durability: -10, speed: 15, cargo: -10 } },
   { id: 'teak', label: 'Teak', modifier: { durability: 12, speed: 5 } },
   { id: 'ebony', label: 'Ebony', modifier: { durability: 20, cargo: 5, speed: -8 } },
+  { id: 'mahogany', label: 'Mahogany', modifier: { durability: 18, speed: 3 } },
+  { id: 'cedar', label: 'Cedar', modifier: { durability: -4, speed: 8, cargo: 5 } },
+  { id: 'pine', label: 'Pine', modifier: { durability: -8, speed: 12, cargo: 2 } },
 ];
 
 export interface SailStyleOption {
@@ -120,4 +123,4 @@ export const crewRoles: CrewRole[] = [
 
 export const sailColors = ['#e8dcc0', '#efe6cf', '#d9c9a6', '#cbb98f', '#b04a2a', '#3d5a80', '#1b1b1b'];
 export const hullColors = ['#7a4b2a', '#5b3a22', '#6b4426', '#3c2417', '#8a6a3f', '#2f3d4d', '#7a2f1b'];
-export const flagColors = ['#1b1b1b', '#111111', '#5b1f1f', '#7a2f1b', '#21406b', '#3d5a80', '#c9a227', '#e8dcc0'];
+export const flagColors = ['#1b1b1b', '#5b1f1f', '#7a2f1b', '#21406b', '#3d5a80', '#c9a227', '#e8dcc0'];

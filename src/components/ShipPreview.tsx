@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type { BuildState, CannonTierId } from '../types/build';
 import { getShipClass, type HullGeometry } from '../data/shipClasses';
 import { useScene, type TimeOfDay } from '../state/scene';
@@ -7,8 +8,7 @@ import { Figurehead } from './Figurehead';
 const VB_W = 800;
 const VB_H = 460;
 const WATER_Y = 360;
-// Shift the whole scene upward so the hull clears the bottom carousel.
-const SCENE_SHIFT = 110;
+const MOBILE_PANEL_SHIP_OFFSET = 230;
 
 interface Palette {
   skyTop: string;
@@ -33,10 +33,41 @@ const STARS: ReadonlyArray<readonly [number, number]> = [
   [380, 140], [620, 150], [270, 70], [700, 120],
 ];
 
-export function ShipPreview({ build, background = false }: { build: BuildState; background?: boolean }) {
+function getContrastingLabelColor(hexColor: string) {
+  const channels = [1, 3, 5].map((offset) => Number.parseInt(hexColor.slice(offset, offset + 2), 16) / 255);
+  const [red, green, blue] = channels.map((channel) =>
+    channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
+  );
+  const luminance = red! * 0.2126 + green! * 0.7152 + blue! * 0.0722;
+  return luminance > 0.2 ? '#2b1d10' : '#f2e2bd';
+}
+
+export function ShipPreview({
+  build,
+  background = false,
+  panelOpen = false,
+}: {
+  build: BuildState;
+  background?: boolean;
+  panelOpen?: boolean;
+}) {
   const { scene } = useScene();
+  const [viewportSize, setViewportSize] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+  const shipPositionRef = useRef<SVGGElement>(null);
+  const previousPanelOpen = useRef(panelOpen);
   const { timeOfDay, weather } = scene;
   const palette = PALETTES[timeOfDay];
+
+  useEffect(() => {
+    const updateViewportSize = () => {
+      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener('resize', updateViewportSize);
+    return () => window.removeEventListener('resize', updateViewportSize);
+  }, []);
 
   const isNight = timeOfDay === 'night';
   const isStorm = weather === 'storm';
@@ -65,13 +96,61 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
   const pixelsPerFt = (geo.halfLen * 2) / shipClass.lengthFt;
   const dinghyLen = DINGHY_FT * pixelsPerFt;
   const dinghyX = cx - geo.halfLen - 28 - dinghyLen / 2;
+  const viewportWidth = Math.max(1, viewportSize.width);
+  const viewportHeight = Math.max(1, viewportSize.height);
+  const mobileScene = background && viewportWidth <= 700;
+  const boatOffset = mobileScene ? 36 : 0;
+  const viewBoxY = mobileScene ? -32 : 0;
+  const viewBoxBottom = VB_H + (mobileScene ? 310 : 0);
+  const viewBoxHeight = viewBoxBottom - viewBoxY;
+  const waveRows = Array.from(
+    { length: Math.ceil((viewBoxBottom - WATER_Y - 12) / 22) },
+    (_, index) => WATER_Y + 16 + index * 22,
+  ).filter((y) => y < viewBoxBottom - 4);
+  const artworkHeight = Math.min(viewportHeight, viewportWidth * viewBoxHeight / VB_W);
+  const artworkTop = (viewportHeight - artworkHeight) / 2;
+  const skyStartOffset = (0 - viewBoxY) / viewBoxHeight;
+  const waterlineOffset = (WATER_Y - viewBoxY) / viewBoxHeight;
+  const celestialY = mobileScene ? 55 : 90;
+  const gradientStop = (y: number) => `${(y / viewportHeight * 100).toFixed(2)}%`;
+
+  useEffect(() => {
+    const shipPosition = shipPositionRef.current;
+    if (!shipPosition) return;
+
+    const baseOffset = mobileScene ? 36 : 0;
+    const from = baseOffset + (mobileScene && previousPanelOpen.current ? MOBILE_PANEL_SHIP_OFFSET : 0);
+    const to = baseOffset + (mobileScene && panelOpen ? MOBILE_PANEL_SHIP_OFFSET : 0);
+    previousPanelOpen.current = panelOpen;
+
+    if (from === to || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      shipPosition.setAttribute('transform', `translate(0 ${to})`);
+      return;
+    }
+
+    const startTime = performance.now();
+    let animationFrame = 0;
+    const animate = (time: number) => {
+      const progress = Math.min((time - startTime) / 650, 1);
+      const easedProgress = 1 - (1 - progress) ** 3;
+      const offset = from + (to - from) * easedProgress;
+      shipPosition.setAttribute('transform', `translate(0 ${offset})`);
+      if (progress < 1) animationFrame = window.requestAnimationFrame(animate);
+    };
+
+    animationFrame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [mobileScene, panelOpen]);
 
   return (
     <svg
       id="ship-preview-svg"
-      viewBox={`0 0 ${VB_W} ${VB_H}`}
+      viewBox={`0 ${viewBoxY} ${VB_W} ${viewBoxHeight}`}
       className={background ? 'ship-preview ship-preview--bg' : 'ship-preview'}
-      preserveAspectRatio={background ? 'xMidYMin slice' : 'xMidYMid meet'}
+      preserveAspectRatio="xMidYMid meet"
+      style={background ? {
+        background: `linear-gradient(180deg, ${palette.skyTop} 0%, ${palette.skyTop} ${gradientStop(artworkTop + artworkHeight * skyStartOffset)}, ${palette.skyBottom} ${gradientStop(artworkTop + artworkHeight * waterlineOffset)}, ${palette.sea} ${gradientStop(artworkTop + artworkHeight * waterlineOffset)}, ${palette.seaDeep} ${gradientStop(artworkTop + artworkHeight)}, ${palette.seaDeep} 100%)`,
+      } : undefined}
       role="img"
       aria-label={build.name}
     >
@@ -81,8 +160,7 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
           50%  { transform: translateY(5px) rotate(-0.6deg); }
           100% { transform: translateY(0px) rotate(0deg); }
         }
-        @keyframes wave-drift { from { transform: translateX(0); } to { transform: translateX(-80px); } }
-        @keyframes wave-drift-slow { from { transform: translateX(0); } to { transform: translateX(80px); } }
+        @keyframes wave-sway { from { transform: translateX(-18px); } to { transform: translateX(18px); } }
         @keyframes cloud-drift { from { transform: translateX(-120px); } to { transform: translateX(900px); } }
         @keyframes rain-fall { from { transform: translateY(-60px); } to { transform: translateY(480px); } }
         @keyframes lightning { 0%, 92%, 100% { opacity: 0; } 93%, 95% { opacity: 0.5; } 94% { opacity: 0.15; } }
@@ -90,8 +168,9 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
         @keyframes dinghy-bob { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(3px) rotate(0.5deg); } }
         .ship-bob { animation: ship-bob 4.5s ease-in-out infinite; transform-origin: ${cx}px ${WATER_Y}px; }
         .dinghy { animation: dinghy-bob 5.5s ease-in-out infinite; transform-origin: ${dinghyX}px ${WATER_Y + 4}px; }
-        .wave-a { animation: wave-drift ${isStorm ? 3 : 7}s linear infinite; }
-        .wave-b { animation: wave-drift-slow ${isStorm ? 4 : 9}s linear infinite; }
+        .wave-line--fast { animation: wave-sway ${isStorm ? 3 : 7}s ease-in-out infinite alternate; }
+        .wave-line--slow { animation: wave-sway ${isStorm ? 4 : 9}s ease-in-out infinite alternate; }
+        @media (prefers-reduced-motion: reduce) { .wave-line { animation: none !important; } }
         .cloud { animation: cloud-drift ${isWindy ? 14 : 40}s linear infinite; }
         .rain-drop { animation: rain-fall 0.7s linear infinite; }
         .lightning { animation: lightning 5s linear infinite; }
@@ -113,7 +192,6 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
         <WoodGrainPatterns />
       </defs>
 
-      <g transform={`translate(0 ${-SCENE_SHIFT})`}>
       {/* Sky */}
       <rect x={0} y={0} width={VB_W} height={WATER_Y} fill="url(#sky)" />
 
@@ -127,8 +205,8 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
       )}
 
       {/* Sun / moon */}
-      <circle cx={650} cy={90} r={60} fill={palette.celestialGlow} opacity={0.18} />
-      <circle className="celestial" cx={650} cy={90} r={isNight ? 26 : 44} fill={palette.celestial} opacity={0.9} />
+      <circle cx={650} cy={celestialY} r={60} fill={palette.celestialGlow} opacity={0.18} />
+      <circle className="celestial" cx={650} cy={celestialY} r={isNight ? 26 : 44} fill={palette.celestial} opacity={0.9} />
 
       {/* Clouds when windy or in a storm */}
       {(isWindy || isStorm) && (
@@ -141,41 +219,53 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
       )}
 
       {/* Sea */}
-      <rect x={0} y={WATER_Y} width={VB_W} height={VB_H - WATER_Y + SCENE_SHIFT} fill="url(#sea)" />
+      <rect x={0} y={WATER_Y} width={VB_W} height={viewBoxBottom - WATER_Y} fill="url(#sea)" />
 
       {/* Animated waves */}
-      <g className="wave-a" stroke={palette.wave} strokeWidth={2} fill="none" opacity={isStorm ? 0.7 : 0.5}>
-        <path d={`M -80 ${WATER_Y + 20} q 40 -10 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
-      </g>
-      <g className="wave-b" stroke={palette.wave} strokeWidth={2} fill="none" opacity={isStorm ? 0.55 : 0.35}>
-        <path d={`M -80 ${WATER_Y + 42} q 40 -8 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
-      </g>
+      {waveRows.map((y, index) => (
+        <g
+          key={y}
+          className={`wave-line ${index % 2 === 0 ? 'wave-line--fast' : 'wave-line--slow'}`}
+          stroke={palette.wave}
+          strokeWidth={2}
+          fill="none"
+          opacity={(isStorm ? 0.7 : 0.5) - (index % 3) * 0.1}
+        >
+          <path d={`M -80 ${y} q 40 ${index % 2 === 0 ? -8 : -5} 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0 t 80 0`} />
+        </g>
+      ))}
 
       {/* The ship, gently bobbing on the water */}
-      <g className="ship-bob">
-        {/* Sails + masts */}
-        {mastXs.map((mx, i) => (
-          <g key={i}>
-            <line x1={mx} y1={mastTopY(i)} x2={mx} y2={deckY} stroke="#3a2417" strokeWidth={5} />
-            <Sail style={build.rigging.sailStyle} color={build.rigging.sailColor} x={mx} top={mastTopY(i)} deckY={deckY} />
-          </g>
-        ))}
+      <g
+        ref={shipPositionRef}
+        className="ship-position"
+        transform={boatOffset ? `translate(0 ${boatOffset})` : undefined}
+      >
+        <g className="ship-bob">
+          {/* Sails + masts */}
+          {mastXs.map((mx, i) => (
+            <g key={i}>
+              <line x1={mx} y1={mastTopY(i)} x2={mx} y2={deckY} stroke="#3a2417" strokeWidth={5} />
+              <Sail style={build.rigging.sailStyle} color={build.rigging.sailColor} x={mx} top={mastTopY(i)} deckY={deckY} />
+            </g>
+          ))}
 
-        {/* Flag on the rearmost (leftmost) mast */}
-        <Flag flag={build.flag} originX={mastXs[0]!} originY={mastTopY(0)} fly={1} />
+          {/* Flag on the rearmost (leftmost) mast */}
+          <Flag flag={build.flag} originX={mastXs[0]!} originY={mastTopY(0)} fly={1} />
 
-        {/* Hull */}
-        <Hull build={build} geo={geo} />
+          {/* Hull */}
+          <Hull build={build} geo={geo} />
 
-        {/* Cannons (mounted across the hull's gun decks) */}
-        <Cannons count={build.armament.cannonCount} tier={build.armament.cannonTier} geo={geo} />
+          {/* Cannons (mounted across the hull's gun decks) */}
+          <Cannons count={build.armament.cannonCount} tier={build.armament.cannonTier} geo={geo} />
 
-        {/* Figurehead at the bow (front of the hull) */}
-        <Figurehead figurehead={build.figurehead} x={bowX - 12} y={deckY + 16} scale={1.1} />
+          {/* Figurehead at the bow (front of the hull) */}
+          <Figurehead figurehead={build.figurehead} x={bowX - 12} y={deckY + 16} scale={1.1} />
+        </g>
+
+        {/* Fixed 15ft reference dinghy for scale comparison */}
+          <Dinghy x={dinghyX} length={dinghyLen} labelColor={getContrastingLabelColor(palette.skyBottom)} />
       </g>
-
-      {/* Fixed 15ft reference dinghy for scale comparison */}
-      <Dinghy x={dinghyX} length={dinghyLen} />
 
       {/* Rain for a storm */}
       {isStorm && (
@@ -190,9 +280,7 @@ export function ShipPreview({ build, background = false }: { build: BuildState; 
       )}
 
       {/* Lightning flash + storm dimming */}
-      {isStorm && <rect className="lightning" x={0} y={0} width={VB_W} height={VB_H} fill="#ffffff" opacity={0} />}
-      {isStorm && <rect x={0} y={0} width={VB_W} height={VB_H} fill="#0a1520" opacity={0.25} />}
-      </g>
+      {isStorm && <rect className="lightning" x={0} y={viewBoxY} width={VB_W} height={viewBoxHeight} fill="#ffffff" opacity={0} />}
     </svg>
   );
 }
@@ -209,10 +297,9 @@ function Cloud({ x, y, scale }: { x: number; y: number; scale: number }) {
 }
 
 /** A small, fixed-size rowboat used as a real-world scale reference (15ft). */
-function Dinghy({ x, length }: { x: number; length: number }) {
+function Dinghy({ x, length, labelColor }: { x: number; length: number; labelColor: string }) {
   const half = length / 2;
-  // Sit the dinghy at the waterline (same level as the ship) so it stays in the
-  // visible open water above the bottom carousel, for a true size comparison.
+  // Sit the dinghy at the waterline (same level as the ship) for a true size comparison.
   const waterY = WATER_Y + 4;
   const keelY = waterY + Math.max(6, length * 0.14);
   const gunwale = waterY - Math.max(5, length * 0.09);
@@ -233,13 +320,13 @@ function Dinghy({ x, length }: { x: number; length: number }) {
       {/* gunwale (top rail) */}
       <path d={`M ${sternX} ${waterY} Q ${x} ${gunwale} ${bowX} ${waterY}`} fill="none" stroke="#241408" strokeWidth={1.5} />
       {/* scale label */}
-      <line x1={x} y1={gunwale} x2={x} y2={gunwale - 12} stroke="#f2e2bd" strokeWidth={1} opacity={0.85} />
+      <line x1={x} y1={gunwale} x2={x} y2={gunwale - 12} stroke={labelColor} strokeWidth={1} opacity={0.85} />
       <text
         x={x}
         y={gunwale - 16}
         textAnchor="middle"
         fontSize={11}
-        fill="#f2e2bd"
+        fill={labelColor}
         opacity={0.9}
         style={{ fontFamily: 'var(--font-display, sans-serif)' }}
       >

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Icon } from './Icon';
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -79,19 +80,21 @@ export function Stepper({
       <button
         type="button"
         className="stepper__btn"
+        aria-label={`Decrease ${label}`}
         disabled={value <= min}
         onClick={() => onChange(Math.max(min, value - 1))}
       >
-        −
+        <Icon name="minus" />
       </button>
       <span className="stepper__value">{value}</span>
       <button
         type="button"
         className="stepper__btn"
+        aria-label={`Increase ${label}`}
         disabled={value >= max}
         onClick={() => onChange(Math.min(max, value + 1))}
       >
-        +
+        <Icon name="plus" />
       </button>
     </div>
   );

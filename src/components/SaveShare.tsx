@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useBuild } from '../state/build';
 import { buildShareUrl, saveToStorage } from '../lib/serialize';
 import { exportShipPng } from '../lib/exportPng';
+import { Icon } from './Icon';
 
 export function SaveShare() {
   const { build, dispatch } = useBuild();
@@ -36,19 +37,23 @@ export function SaveShare() {
 
   return (
     <div className="save-share" role="group" aria-label="Chart the Course">
-      <button type="button" className="scene-btn" onClick={handleSave}>
-        Save
+      <button type="button" className="scene-btn" aria-label="Save" title="Save" onClick={handleSave}>
+        <Icon name="save" />
+        <span className="visually-hidden">Save</span>
       </button>
-      <button type="button" className="scene-btn" onClick={handleShare}>
-        Copy Link
+      <button type="button" className="scene-btn" aria-label="Copy Link" title="Copy Link" onClick={handleShare}>
+        <Icon name="link" />
+        <span className="visually-hidden">Copy Link</span>
       </button>
-      <button type="button" className="scene-btn" onClick={handleExport}>
-        Export PNG
+      <button type="button" className="scene-btn" aria-label="Export PNG" title="Export PNG" onClick={handleExport}>
+        <Icon name="download" />
+        <span className="visually-hidden">Export PNG</span>
       </button>
-      <button type="button" className="scene-btn scene-btn--danger" onClick={handleReset}>
-        Reset
+      <button type="button" className="scene-btn scene-btn--danger" aria-label="Reset" title="Reset" onClick={handleReset}>
+        <Icon name="reset" />
+        <span className="visually-hidden">Reset</span>
       </button>
-      {message && <p className="save-share__msg">{message}</p>}
+      {message && <p className="save-share__msg" role="status">{message}</p>}
     </div>
   );
 }
