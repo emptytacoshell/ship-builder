@@ -1,5 +1,6 @@
-import type { BuildState, CannonTierId } from '../types/build';
+import type { BuildState, CannonTierId, WoodId } from '../types/build';
 import { getShipClass, type HullGeometry } from '../data/shipClasses';
+import { WOOD_GRAIN, type GrainTile, grainLinePath, grainLineShifts } from '../lib/grain';
 import { useScene, type TimeOfDay } from '../state/scene';
 import { Flag } from './Flag';
 import { Figurehead } from './Figurehead';
@@ -306,56 +307,31 @@ function Sail({
   );
 }
 
-/** SVG pattern definitions for wood grain textures per wood type. */
+/**
+ * SVG pattern definitions for wood grain textures per wood type. Tiles come
+ * from `WOOD_GRAIN`, where every mark is built to tile without a visible
+ * reset (see src/lib/grain.ts).
+ */
 function WoodGrainPatterns() {
   return (
     <>
-      {/* Oak: classic straight grain with slight wave */}
-      <pattern id="wood-grain-oak" width="20" height="40" patternUnits="userSpaceOnUse">
-        <path d="M 2 0 Q 4 10 2 20 Q 0 30 3 40" stroke="#2a1508" fill="none" strokeWidth="1.5" opacity="0.3" />
-        <path d="M 8 0 Q 10 12 8 24 Q 6 34 9 40" stroke="#2a1508" fill="none" strokeWidth="1" opacity="0.2" />
-        <path d="M 14 0 Q 16 8 14 20 Q 12 32 15 40" stroke="#1a0f05" fill="none" strokeWidth="1.2" opacity="0.25" />
-        <path d="M 0 10 Q 5 12 10 10 Q 15 8 20 10" stroke="#1a0f05" fill="none" strokeWidth="0.8" opacity="0.12" />
-      </pattern>
-
-      {/* Walnut: rich cathedral / wavy grain */}
-      <pattern id="wood-grain-walnut" width="30" height="50" patternUnits="userSpaceOnUse">
-        <path d="M 0 5 Q 8 0 15 5 Q 22 10 30 5" stroke="#1a0f08" fill="none" strokeWidth="2" opacity="0.3" />
-        <path d="M 0 15 Q 10 10 15 15 Q 20 20 30 15" stroke="#1a0f08" fill="none" strokeWidth="1.5" opacity="0.2" />
-        <path d="M 0 25 Q 5 22 15 25 Q 25 28 30 25" stroke="#2a1810" fill="none" strokeWidth="1" opacity="0.25" />
-        <path d="M 0 35 Q 12 30 15 35 Q 18 40 30 35" stroke="#1a0f08" fill="none" strokeWidth="2" opacity="0.3" />
-        <path d="M 0 45 Q 8 42 15 45 Q 22 48 30 45" stroke="#1a0f08" fill="none" strokeWidth="1.5" opacity="0.2" />
-      </pattern>
-
-      {/* Ironwood: very dense, tight parallel lines */}
-      <pattern id="wood-grain-ironwood" width="12" height="30" patternUnits="userSpaceOnUse">
-        <line x1="2" y1="0" x2="2" y2="30" stroke="#0a0604" strokeWidth="1.2" opacity="0.35" />
-        <line x1="5" y1="0" x2="5" y2="30" stroke="#0a0604" strokeWidth="0.8" opacity="0.25" />
-        <line x1="8" y1="0" x2="8" y2="30" stroke="#0a0604" strokeWidth="1.4" opacity="0.3" />
-        <line x1="11" y1="0" x2="11" y2="30" stroke="#0a0604" strokeWidth="0.7" opacity="0.2" />
-      </pattern>
-
-      {/* Driftwood: weathered, broken grain with knots */}
-      <pattern id="wood-grain-driftwood" width="24" height="36" patternUnits="userSpaceOnUse">
-        <path d="M 3 0 L 3 8 M 3 14 L 3 22 M 3 28 L 3 36" stroke="#7a8a8a" fill="none" strokeWidth="1.5" opacity="0.35" />
-        <path d="M 10 0 L 10 5 M 10 12 L 10 18 M 10 26 L 10 36" stroke="#6a7a7a" fill="none" strokeWidth="1" opacity="0.3" />
-        <path d="M 17 0 L 17 10 M 17 16 L 17 20 M 17 28 L 17 33" stroke="#7a8a8a" fill="none" strokeWidth="1.2" opacity="0.25" />
-        <ellipse cx="7" cy="30" rx="3" ry="4" stroke="#5a6a6a" fill="none" strokeWidth="0.8" opacity="0.3" />
-        <path d="M 20 4 L 22 8 L 20 12" stroke="#8a9a9a" fill="none" strokeWidth="0.8" opacity="0.25" />
-      </pattern>
-
-      {/* Teak: fine, straight golden grain */}
-      <pattern id="wood-grain-teak" width="16" height="40" patternUnits="userSpaceOnUse">
-        <path d="M 3 0 Q 4 20 3 40" stroke="#5a3a10" fill="none" strokeWidth="0.8" opacity="0.25" />
-        <path d="M 8 0 Q 9 15 8 30 Q 7 35 8 40" stroke="#5a3a10" fill="none" strokeWidth="1" opacity="0.3" />
-        <path d="M 13 0 Q 14 10 13 25 Q 12 35 13 40" stroke="#6a4a18" fill="none" strokeWidth="0.7" opacity="0.2" />
-      </pattern>
-
-      {/* Ebony: very subtle, dark fine grain */}
-      <pattern id="wood-grain-ebony" width="14" height="35" patternUnits="userSpaceOnUse">
-        <path d="M 3 0 Q 4 17 3 35" stroke="#050302" fill="none" strokeWidth="1" opacity="0.45" />
-        <path d="M 9 0 Q 10 17 9 35" stroke="#050302" fill="none" strokeWidth="0.8" opacity="0.35" />
-      </pattern>
+      {(Object.entries(WOOD_GRAIN) as Array<[WoodId, GrainTile]>).map(([wood, tile]) => (
+        <pattern key={wood} id={`wood-grain-${wood}`} width={tile.width} height={tile.height} patternUnits="userSpaceOnUse">
+          {tile.lines.map((line, index) =>
+            grainLineShifts(line, tile).map((shift) => (
+              <path
+                key={`${index}:${shift}`}
+                d={grainLinePath(line, tile, shift)}
+                fill="none"
+                stroke={line.stroke}
+                strokeWidth={line.strokeWidth}
+                strokeOpacity={line.opacity}
+                strokeLinecap="round"
+              />
+            )),
+          )}
+        </pattern>
+      ))}
     </>
   );
 }
